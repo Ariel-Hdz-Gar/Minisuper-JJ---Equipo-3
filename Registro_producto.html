@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registrar Producto - MiniSuper JJ</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2 { border-bottom: 2px solid #3498db; padding-bottom: 10px; color: #2c3e50; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .actions { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+        button { padding: 12px 20px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .btn-save { background-color: #27ae60; color: white; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>📦 Registrar Nuevo Producto</h2>
+    <div class="form-grid">
+        <div class="form-group"><label>Código de Barras *</label><input type="text" placeholder="Escanee o ingrese código"></div>
+        <div class="form-group"><label>Nombre del Producto *</label><input type="text" placeholder="Ej. Leche Lala Entera 1L"></div>
+        <div class="form-group"><label>Proveedor </label><select><option>Coca Cola</option><option>Bimbo</option></select></div>
+        <div class="form-group"><label>Categoría</label><select><option>Abarrotes</option><option>Bebidas</option></select></div>
+        <div class="form-group"><label>Precio de Compra ($)</label><input type="number" placeholder="0.00"></div>
+        <div class="form-group"><label>Precio de Venta ($) *</label><input type="number" placeholder="0.00"></div>
+        <div class="form-group"><label>Stock Inicial (Cantidad) *</label><input type="number" placeholder="0"></div>
+        <div class="form-group"><label>Stock Mínimo para Alerta </label><input type="number" placeholder="Ej. 5"></div>
+    </div>
+    <div class="actions">
+        <button class="btn-save" onclick="alert('Producto registrado exitosamente. Stock inicial guardado.')">💾 Guardar Producto</button>
+    </div>
+</div>
+</body>
+</html>

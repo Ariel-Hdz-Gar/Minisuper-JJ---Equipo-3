@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Punto de Venta - MiniSuper JJ</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #e9ecef; }
+        header { background-color: #2c3e50; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .container { display: flex; height: calc(100vh - 60px); }
+        
+        /* Panel Izquierdo - Lista de Productos */
+        .left-panel { flex: 3; padding: 20px; overflow-y: auto; }
+        .search-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+        .search-bar input { flex: 1; padding: 15px; font-size: 18px; border: 1px solid #ccc; border-radius: 5px; }
+        .search-bar button { padding: 15px 25px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; color: #555; }
+        .btn-delete { color: red; cursor: pointer; font-weight: bold; border: none; background: none; }
+
+        /* Panel Derecho - Totales y Pago */
+        .right-panel { flex: 1; background: white; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border-left: 1px solid #ddd; }
+        .totals { text-align: right; margin-bottom: 20px; }
+        .totals h1 { font-size: 48px; color: #2c3e50; margin: 0; }
+        .totals p { font-size: 18px; color: #7f8c8d; margin: 5px 0; }
+        
+        .payment-methods { display: flex; flex-direction: column; gap: 10px; }
+        .btn-pay { padding: 20px; font-size: 20px; border: none; border-radius: 8px; cursor: pointer; color: white; font-weight: bold; transition: 0.3s; }
+        .btn-cash { background-color: #27ae60; } /* Verde Dinero */
+        .btn-mp { background-color: #009ee3; } /* Azul Mercado Pago */
+        .btn-credit { background-color: #e67e22; } /* Naranja Crédito */
+        
+        .btn-pay:hover { opacity: 0.9; transform: scale(1.02); }
+        
+        /* Cliente Info */
+        .client-info { background: #f1f1f1; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>🛒 <strong>MiniSuper JJ</strong> | Usuario: Encargado</div>
+    <div>Fecha: 12/12/2025 | Caja: Abierta</div>
+</header>
+
+<div class="container">
+    <div class="left-panel">
+        <div class="search-bar">
+            <input type="text" placeholder="Escanea código de barras o busca producto..." autofocus>
+            <button>🔍 Buscar</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Producto</th>
+                    <th>Cant.</th>
+                    <th>Precio Unit.</th>
+                    <th>Subtotal</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>75010553</td>
+                    <td>Coca Cola 600ml</td>
+                    <td>2</td>
+                    <td>$18.00</td>
+                    <td>$36.00</td>
+                    <td><button class="btn-delete">X</button></td>
+                </tr>
+                <tr>
+                    <td>75010001</td>
+                    <td>Papas Sabritas Sal 45g</td>
+                    <td>1</td>
+                    <td>$22.00</td>
+                    <td>$22.00</td>
+                    <td><button class="btn-delete">X</button></td>
+                </tr>
+                <tr>
+                    <td>PROD-099</td>
+                    <td>Tortillas de Harina (Paq)</td>
+                    <td>1</td>
+                    <td>$30.00</td>
+                    <td>$30.00</td>
+                    <td><button class="btn-delete">X</button></td>
+                </tr>
+                <tr><td colspan="6" style="height: 200px; text-align: center; color: #ccc;">Escanee más productos...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="right-panel">
+        <div>
+            <div class="client-info">
+                <strong>Cliente:</strong> Público General <a href="#" style="color: blue;">[Cambiar]</a>
+            </div>
+            
+            <div class="totals">
+                <p>Subtotal: $88.00</p>
+                <p>IVA: $0.00</p>
+                <h1>$88.00</h1>
+            </div>
+        </div>
+
+        <div class="payment-methods">
+            <p style="text-align: center; color: #555;">Seleccione Método de Pago:</p>
+            <button class="btn-pay btn-cash" onclick="alert('Abriendo cajón de dinero... Cambio calculado.')">💵 Cobrar Efectivo</button>
+            <button class="btn-pay btn-mp" onclick="alert('Enviando solicitud a terminal Mercado Pago...')">🔷 Mercado Pago</button>
+            <button class="btn-pay btn-credit" onclick="alert('Registrar venta a crédito (Fiado) para cliente registrado.')">📝 Venta a Crédito</button>
+            <button style="margin-top: 10px; background: transparent; border: 1px solid #ccc; padding: 10px; cursor: pointer; color: #555;">Cancelar Venta</button>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Alertas de Inventario Bajo - MiniSuper JJ</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2 { border-bottom: 2px solid #e67e22; padding-bottom: 10px; color: #d35400; }
+        .alert-box { background-color: #fcf8e3; border: 1px solid #f0ad4e; color: #8a6d3b; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; text-align: left; border: 1px solid #ddd; }
+        th { background-color: #fdf3e9; }
+        .status-low { color: #e74c3c; font-weight: bold; }
+        .btn-action { background-color: #3498db; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px; }
+        .btn-ignore { background-color: #95a5a6; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>🔔 Alertas de Inventario Bajo </h2>
+    
+    <div class="alert-box">
+        Productos por debajo del Stock Mínimo (3 artículos). Se recomienda reabastecimiento.
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Stock Actual</th>
+                <th>Nivel Mínimo</th>
+                <th>Faltante para Mínimo</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Cerveza Pacífico (Alta Rotación)</td>
+                <td class="status-low">5</td>
+                <td>10</td>
+                <td>5</td>
+                <td><button class="btn-action">Añadir a Pedido</button> <button class="btn-ignore">Ignorar</button></td>
+            </tr>
+            <tr>
+                <td>Leche Deslactosada 1L</td>
+                <td class="status-low">2</td>
+                <td>3</td>
+                <td>1</td>
+                <td><button class="btn-action">Añadir a Pedido</button> <button class="btn-ignore">Ignorar</button></td>
+            </tr>
+            <tr>
+                <td>Tonayán Reposado (Botella)</td>
+                <td class="status-low">0</td>
+                <td>5</td>
+                <td>5</td>
+                <td><button class="btn-action">Añadir a Pedido</button> <button class="btn-ignore">Ignorar</button></td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div style="margin-top: 20px; text-align: right;">
+        <button class="btn-action btn-generate" onclick="alert('Generando Orden de Compra con productos seleccionados...')">Generar Orden de Compra</button>
+    </div>
+</div>
+</body>
+</html>

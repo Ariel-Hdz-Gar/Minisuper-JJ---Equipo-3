@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Inicio de sesión - MinisuperJJ</title>
+		<style>
+			:root{--bg:#f4f7fb;--card:#ffffff;--accent:#1671ad;--muted:#6b7280}
+			html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,var(--bg),#eef2f7)}
+			.wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:32px}
+			.card{background:var(--card);width:100%;max-width:420px;padding:28px;border-radius:12px;box-shadow:0 8px 24px rgba(16,24,40,0.06);text-align:center}
+			h1{margin:0 0 8px;font-size:28px;color:#0f172a}
+			p.lead{margin:0 0 20px;color:var(--muted)}
+			form{display:grid;gap:12px;text-align:left}
+			label{font-size:13px;color:#111827}
+			input[type="text"],input[type="password"]{width:100%;padding:10px 12px;border:1px solid #e6e9ef;border-radius:8px;font-size:14px}
+			button{background:var(--accent);color:#fff;padding:10px 12px;border:none;border-radius:8px;font-size:15px;cursor:pointer}
+			.footer{margin-top:14px;font-size:13px;color:var(--muted)}
+			/* Estilo del mensaje de error */
+			.error{background:#fff1f2;color:#991b1b;padding:10px 12px;border-radius:8px;margin:0 0 12px;border:1px solid #fecaca;display:none}
+			.error.show{display:block}
+			@media (max-width:420px){.card{padding:20px;border-radius:10px}}
+		</style>
+	</head>
+	<body>
+		<div class="wrap">
+			<main class="card" role="main">
+				<h1>🛒MinisuperJJ</h1>
+				<p class="lead">¿Quién está iniciando sesión?</p>
+				<!-- Mensaje de error: inicialmente oculto -->
+				<div id="error" class="error" role="alert" aria-live="assertive" tabindex="-1">El usuario y contraseña son incorrectos.</div>
+				<form action="#" method="post" aria-label="Formulario de inicio de sesión">
+					<div>
+						<label for="usuario">Usuario</label>
+						<input id="usuario" name="usuario" type="text" placeholder="Ingresa tu usuario" required>
+					</div>
+					<div>
+						<label for="contrasena">Contraseña</label>
+						<input id="contrasena" name="contrasena" type="password" placeholder="Ingresa tu contraseña" required>
+					</div>
+					<button type="submit">Iniciar sesión</button>
+				</form>
+				<div class="footer">¿Olvidaste tu contraseña? Habla con el administrador.</div>
+			</main>
+		</div>
+		<script>
+			(function(){
+				const form = document.querySelector('form');
+				const error = document.getElementById('error');
+				const validUsers = {
+					'Test1': '1234',
+					'Test2': '5678'
+				};
+				form.addEventListener('submit', function(e){
+					e.preventDefault();
+					const usuario = document.getElementById('usuario').value;
+					const contrasena = document.getElementById('contrasena').value;
+					if (validUsers[usuario] === contrasena) {
+						if (usuario === 'Test1') {
+							window.location.href = 'Dueno.html';
+						} else if (usuario === 'Test2') {
+							window.location.href = 'Empleado.html';
+						} else {
+							alert('Inicio de sesión exitoso');
+						}
+					} else {
+						error.classList.add('show');
+						error.hidden = false;
+						error.focus();
+					}
+				});
+			})();
+		</script>
+	</body>
+</html>
+

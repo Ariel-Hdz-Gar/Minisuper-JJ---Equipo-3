@@ -9,4 +9,4 @@ Aquí se dividen las interfaces por los casos de uso establecidos en las primera
 -Alertas(Alertas)
 -Gestionar Adeudos(Adeudos)
 
-Ademas se adjuntaron capturas de pantalla de cada interfaz en la carpeta "Capturas de la Interfaz"
+Ademas se adjuntaron capturas de pantalla de cada interfaz en la carpeta "Capturas de la Interfaz" y se creo una caprta llamada "Commits del Front-End" para evidenciar el trabajo en equipo

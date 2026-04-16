@@ -1,0 +1,22 @@
+Archivos principales:
+Seguridad.html
+
+Diseño de la interfaz:
+-Encabezado de seccion
+-Formulario de captura
+-Visualizacion de registros
+
+Elementos principales:
+-Campos de entrada
+-Botones de comando
+-Tabla de personal
+-Contenedor responsivo
+
+Funcionalidad:
+La interfaz permite la creación de nuevos perfiles laborales, vinculando a cada persona con un identificador fiscal (RFC) y una 
+función específica.
+El flujo de trabajo permite al administrador definir roles (cargos), lo cual es fundamental para la seguridad y los permisos de
+acceso dentro del sistema global del minisuper.
+Al requerir el RFC, el sistema asegura que cada registro sea único y cumpla con los requisitos básicos de identificación de personal.
+La tabla de ejemplos sirve como flujo de salida para verificar que la información capturada sea correcta y esté disponible
+para consultas rápidas.

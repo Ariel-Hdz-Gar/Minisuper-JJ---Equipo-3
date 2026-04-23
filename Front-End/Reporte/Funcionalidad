@@ -1,6 +1,0 @@
-La interfaz permite al usuario definir un rango de fechas específico para auditar las finanzas del negocio.
-Ofrece la funcionalidad de cambiar el tipo de reporte para identificar qué productos se venden más.
-El flujo de la tabla permite visualizar no solo el total vendido, sino el método de pago utilizado y los montos que quedaron como 
-adeudos pendientes.
-El sistema facilita la portabilidad de los datos permitiendo exportar los resultados generados a formatos PDF o Excel para su
-revisión externa.

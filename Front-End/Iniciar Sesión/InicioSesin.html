@@ -47,27 +47,41 @@
 			(function(){
 				const form = document.querySelector('form');
 				const error = document.getElementById('error');
-				const validUsers = {
-					'Test1': '1234',
-					'Test2': '5678'
-				};
 				form.addEventListener('submit', function(e){
 					e.preventDefault();
 					const usuario = document.getElementById('usuario').value;
 					const contrasena = document.getElementById('contrasena').value;
-					if (validUsers[usuario] === contrasena) {
-						if (usuario === 'Test1') {
-							window.location.href = 'Dueno.html';
-						} else if (usuario === 'Test2') {
-							window.location.href = 'Empleado.html';
+					
+					// Enviar datos al servidor Java
+					fetch('http://localhost:8080/api/login', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/x-www-form-urlencoded'
+						},
+						body: 'usuario=' + encodeURIComponent(usuario) + '&contrasena=' + encodeURIComponent(contrasena)
+					})
+					.then(response => response.json())
+					.then(data => {
+						if (data.success) {
+							if (data.rol === '1') {
+								window.location.href = 'Dueno.html';
+							} else if (data.rol === '2') {
+								window.location.href = 'Empleado.html';
+							} else {
+								alert('Inicio de sesión exitoso');
+							}
 						} else {
-							alert('Inicio de sesión exitoso');
+							error.classList.add('show');
+							error.hidden = false;
+							error.focus();
 						}
-					} else {
+					})
+					.catch(err => {
+						console.error('Error:', err);
+						error.textContent = 'Error de conexión con el servidor';
 						error.classList.add('show');
 						error.hidden = false;
-						error.focus();
-					}
+					});
 				});
 			})();
 		</script>

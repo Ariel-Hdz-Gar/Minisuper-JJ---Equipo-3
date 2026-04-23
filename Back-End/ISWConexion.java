@@ -8,7 +8,6 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 import java.io.*;
 import java.net.InetSocketAddress;
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,10 +38,6 @@ public class ISWConexion
         try (Connection con = conectarDB();
              PreparedStatement ps = con.prepareStatement(sql))
         {
-            if (con == null) {
-                System.out.println("Error: No se pudo establecer conexión con la BD");
-                return null;
-            }
             ps.setString(1, Nombre_Completo);
             ps.setString(2, Contraseña);
             ResultSet rs = ps.executeQuery();

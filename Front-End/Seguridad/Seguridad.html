@@ -19,43 +19,108 @@
 <body>
 <div class="container">
     <h2>Registro de Empleados</h2>
-    <form style="margin-bottom: 20px;">
+    <form id="empleadoForm" style="margin-bottom: 20px;">
         <label for="nombre">Nombre:</label><br>
         <input type="text" id="nombre" name="nombre" required style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;"><br>
-        <label for="rfc">RFC:</label><br>
-        <input type="text" id="rfc" name="rfc" required style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;"><br>
-        <label for="cargo">Cargo:</label><br>
-        <input type="text" id="cargo" name="cargo" required style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;"><br>
+        <label for="contraseña">Contraseña:</label><br>
+        <input type="text" id="contraseña" name="contraseña" required style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;"><br>
         <button type="submit" class="btn-action">Registrar Empleado</button>
     </form>
+    
+    <div id="mensaje" style="display: none; padding: 15px; border-radius: 5px; margin-bottom: 20px;"></div>
     
     <h3>Ejemplos de Empleados Registrados</h3>
     <table>
         <thead>
             <tr>
                 <th>Nombre</th>
-                <th>RFC</th>
+                <th>Contraseña</th>
                 <th>Cargo</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="tablaEmpleados">
             <tr>
-                <td>Juan Pérez</td>
-                <td>PEJU850101ABC</td>
-                <td>Cajero</td>
-            </tr>
-            <tr>
-                <td>María García</td>
-                <td>GAMA900202DEF</td>
-                <td>Vendedora</td>
-            </tr>
-            <tr>
-                <td>Carlos López</td>
-                <td>LOCA750303GHI</td>
-                <td>Gerente</td>
+                <td colspan="3" style="text-align: center;">Cargando empleados...</td>
             </tr>
         </tbody>
     </table>
 </div>
+
+<script>
+    document.getElementById('empleadoForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Obtener los valores de los campos
+        const nombre = document.getElementById('nombre').value;
+        const password = document.getElementById('contraseña').value;
+        
+        console.log('Datos capturados:', { nombre, password, cargo });
+        
+        // Enviar los datos al servidor
+        fetch('http://localhost:8080/api/registrarEmpleado', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'nombre=' + encodeURIComponent(nombre) + 
+                  '&password=' + encodeURIComponent(password)
+        })
+        .then(response => response.json())
+        .then(data => {
+            const mensajeDiv = document.getElementById('mensaje');
+            mensajeDiv.style.display = 'block';
+            if (data.success) {
+                mensajeDiv.style.backgroundColor = '#d4edda';
+                mensajeDiv.style.color = '#155724';
+                mensajeDiv.style.border = '1px solid #c3e6cb';
+                mensajeDiv.textContent = data.mensaje;
+                // Limpiar el formulario
+                document.getElementById('empleadoForm').reset();
+            } else {
+                mensajeDiv.style.backgroundColor = '#f8d7da';
+                mensajeDiv.style.color = '#721c24';
+                mensajeDiv.style.border = '1px solid #f5c6cb';
+                mensajeDiv.textContent = data.mensaje;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const mensajeDiv = document.getElementById('mensaje');
+            mensajeDiv.style.display = 'block';
+            mensajeDiv.style.backgroundColor = '#f8d7da';
+            mensajeDiv.style.color = '#721c24';
+            mensajeDiv.style.border = '1px solid #f5c6cb';
+            mensajeDiv.textContent = 'Error de conexión con el servidor';
+        });
+    });
+    
+    function cargarEmpleados() {
+        fetch('http://localhost:8080/api/obtenerEmpleados')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('tablaEmpleados');
+            tbody.innerHTML = '';
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No hay empleados registrados</td></tr>';
+            } else {
+                data.forEach(empleado => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = '<td>' + empleado.nombre + '</td><td>' + empleado.password + '</td><td>' + empleado.cargo + '</td>';
+                    tbody.appendChild(tr);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error al cargar empleados:', error);
+            const tbody = document.getElementById('tablaEmpleados');
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Error al cargar empleados</td></tr>';
+        });
+    }
+    
+    // Cargar empleados al iniciar la página
+    cargarEmpleados();
+</script>
+
 </body>
 </html>

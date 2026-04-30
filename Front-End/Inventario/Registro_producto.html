@@ -14,24 +14,82 @@
         .actions { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
         button { padding: 12px 20px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
         .btn-save { background-color: #27ae60; color: white; }
+        .mensaje { margin-top: 15px; padding: 10px; border-radius: 4px; display: none; }
+        .mensaje.exito { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .mensaje.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
     </style>
 </head>
 <body>
 <div class="container">
     <h2>📦 Registrar Nuevo Producto</h2>
+    <form id="formProducto">
     <div class="form-grid">
-        <div class="form-group"><label>Código de Barras *</label><input type="text" placeholder="Escanee o ingrese código"></div>
-        <div class="form-group"><label>Nombre del Producto *</label><input type="text" placeholder="Ej. Leche Lala Entera 1L"></div>
-        <div class="form-group"><label>Proveedor </label><select><option>Coca Cola</option><option>Bimbo</option></select></div>
-        <div class="form-group"><label>Categoría</label><select><option>Abarrotes</option><option>Bebidas</option></select></div>
-        <div class="form-group"><label>Precio de Compra ($)</label><input type="number" placeholder="0.00"></div>
-        <div class="form-group"><label>Precio de Venta ($) *</label><input type="number" placeholder="0.00"></div>
-        <div class="form-group"><label>Stock Inicial (Cantidad) *</label><input type="number" placeholder="0"></div>
-        <div class="form-group"><label>Stock Mínimo para Alerta </label><input type="number" placeholder="Ej. 5"></div>
+        <div class="form-group"><label>Código de Barras *</label><input type="text" name="Id_Productos" placeholder="Id_Productos" required></div>
+        <div class="form-group"><label>Nombre del Producto *</label><input type="text" name="Nombre_Producto" placeholder="Nombre_Producto" required></div>
+        <div class="form-group"><label>Proveedor </label><select name="ID_Proveedores" id="proveedorSelect"><option value="">Cargando proveedores...</option></select></div>
+        <div class="form-group"><label>Precio de Compra ($)</label><input type="number" name="Precio_Compra" placeholder="Precio_Compra" step="0.01"></div>
+        <div class="form-group"><label>Precio de Venta ($) *</label><input type="number" name="Precio_Venta" placeholder="Precio_Venta" step="0.01" required></div>
+        <div class="form-group"><label>Stock Inicial (Cantidad) *</label><input type="number" name="Stock" placeholder="Stock" required></div>
+        <div class="form-group"><label>Stock Mínimo para Alerta </label><input type="number" name="Stock_Minimo" placeholder="Stock_Minimo"></div>
     </div>
     <div class="actions">
-        <button class="btn-save" onclick="alert('Producto registrado exitosamente. Stock inicial guardado.')">💾 Guardar Producto</button>
+        <button type="submit" class="btn-save">💾 Guardar Producto</button>
     </div>
+    </form>
+    <div id="mensaje" class="mensaje"></div>
 </div>
+<script>
+// Cargar proveedores al iniciar la página
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('http://localhost:8080/api/obtenerProveedores')
+        .then(response => response.json())
+        .then(data => {
+            const select = document.getElementById('proveedorSelect');
+            select.innerHTML = '<option value="">Seleccionar proveedor</option>';
+            data.forEach(proveedor => {
+                const option = document.createElement('option');
+                option.value = proveedor.Id_Proveedores;
+                option.textContent = proveedor.Nombre_Proveedor;
+                select.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error al cargar proveedores:', error);
+            document.getElementById('proveedorSelect').innerHTML = '<option value="">Error al cargar</option>';
+        });
+});
+
+document.getElementById('formProducto').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const params = new URLSearchParams(formData).toString();
+    
+    fetch('http://localhost:8080/api/registrarProducto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params
+    })
+    .then(response => response.json())
+    .then(data => {
+        const mensajeDiv = document.getElementById('mensaje');
+        mensajeDiv.style.display = 'block';
+        if (data.success) {
+            mensajeDiv.className = 'mensaje exito';
+            mensajeDiv.textContent = '✅ ' + data.mensaje;
+            this.reset();
+        } else {
+            mensajeDiv.className = 'mensaje error';
+            mensajeDiv.textContent = '❌ ' + data.mensaje;
+        }
+    })
+    .catch(error => {
+        const mensajeDiv = document.getElementById('mensaje');
+        mensajeDiv.style.display = 'block';
+        mensajeDiv.className = 'mensaje error';
+        mensajeDiv.textContent = 'Error de conexión: ' + error.message;
+    });
+});
+</script>
 </body>
 </html>

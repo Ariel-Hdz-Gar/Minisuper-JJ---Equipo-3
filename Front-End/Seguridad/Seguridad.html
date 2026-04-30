@@ -24,6 +24,8 @@
         <input type="text" id="nombre" name="nombre" required style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;"><br>
         <label for="contraseña">Contraseña:</label><br>
         <input type="text" id="contraseña" name="contraseña" required style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;"><br>
+        <label for="cargo">Cargo:</label><br>
+        <input type="text" id="cargo" name="cargo" required style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px;"><br>
         <button type="submit" class="btn-action">Registrar Empleado</button>
     </form>
     
@@ -53,8 +55,7 @@
         // Obtener los valores de los campos
         const nombre = document.getElementById('nombre').value;
         const password = document.getElementById('contraseña').value;
-        
-        console.log('Datos capturados:', { nombre, password, cargo });
+        const cargo = document.getElementById('cargo').value;
         
         // Enviar los datos al servidor
         fetch('http://localhost:8080/api/registrarEmpleado', {
@@ -63,7 +64,8 @@
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: 'nombre=' + encodeURIComponent(nombre) + 
-                  '&password=' + encodeURIComponent(password)
+                  '&password=' + encodeURIComponent(password) +
+                  '&cargo=' + encodeURIComponent(cargo)
         })
         .then(response => response.json())
         .then(data => {

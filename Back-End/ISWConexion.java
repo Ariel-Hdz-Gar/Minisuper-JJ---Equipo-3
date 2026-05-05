@@ -107,6 +107,37 @@ public class ISWConexion
         return json.toString();
     }
 
+    // Método para obtener productos con stock bajo
+    public static String obtenerProductosBajoStock()
+    {
+        String sql = "SELECT Nombre_Producto, Stock, Stock_Minimo FROM productos WHERE Stock <= Stock_Minimo ORDER BY Nombre_Producto";
+        StringBuilder json = new StringBuilder("[");
+        try (Connection con = conectarDB();
+             PreparedStatement ps = con.prepareStatement(sql))
+        {
+            ResultSet rs = ps.executeQuery();
+            boolean first = true;
+            while (rs.next()) {
+                if (!first) json.append(",");
+                json.append("{\"Nombre_Producto\":\"");
+                json.append(rs.getString("Nombre_Producto"));
+                json.append("\",\"Stock\":");
+                json.append(rs.getInt("Stock"));
+                json.append(",\"Stock_Minimo\":");
+                json.append(rs.getInt("Stock_Minimo"));
+                json.append("}");
+                first = false;
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("Error al obtener productos bajo stock: " + e.getMessage());
+            e.printStackTrace();
+        }
+        json.append("]");
+        return json.toString();
+    }
+
     // Método para registrar un nuevo producto
     public static String registrarProducto(String Id_Productos, String Nombre_Producto, 
         double Precio_Compra, double Precio_Venta, int Stock, int Stock_Minimo, int ID_Proveedores)
@@ -204,6 +235,7 @@ public class ISWConexion
             server.createContext("/api/obtenerEmpleados", new ObtenerEmpleadosHandler());
             server.createContext("/api/registrarProducto", new RegistrarProductoHandler());
             server.createContext("/api/obtenerProveedores", new ObtenerProveedoresHandler());
+            server.createContext("/api/obtenerProductosBajoStock", new ObtenerProductosBajoStockHandler());
             server.setExecutor(null);
             server.start();
             System.out.println("Servidor iniciado en http://localhost:8080");
@@ -431,6 +463,32 @@ public class ISWConexion
                 exchange.sendResponseHeaders(200, proveedoresJson.length());
                 OutputStream os = exchange.getResponseBody();
                 os.write(proveedoresJson.getBytes());
+                os.close();
+            } else if ("OPTIONS".equals(exchange.getRequestMethod())) {
+                exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, OPTIONS");
+                exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+                exchange.sendResponseHeaders(204, -1);
+                exchange.close();
+            }
+        }
+    }
+
+    static class ObtenerProductosBajoStockHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if ("GET".equals(exchange.getRequestMethod())) {
+                System.out.println("Solicitando productos bajo stock");
+                
+                // Obtener productos bajo stock de la BD
+                String productosJson = obtenerProductosBajoStock();
+                
+                // Enviar respuesta
+                exchange.getResponseHeaders().set("Content-Type", "application/json");
+                exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                exchange.sendResponseHeaders(200, productosJson.length());
+                OutputStream os = exchange.getResponseBody();
+                os.write(productosJson.getBytes());
                 os.close();
             } else if ("OPTIONS".equals(exchange.getRequestMethod())) {
                 exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");

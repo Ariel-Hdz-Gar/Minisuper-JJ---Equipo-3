@@ -12,6 +12,7 @@
         th, td { padding: 10px; text-align: left; border: 1px solid #ddd; }
         th { background-color: #fdf3e9; }
         .status-low { color: #e74c3c; font-weight: bold; }
+        .alert-row { background-color: #ffe6e6; }
         .btn-action { background-color: #3498db; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px; }
         .btn-ignore { background-color: #95a5a6; }
     </style>
@@ -27,35 +28,14 @@
     <table>
         <thead>
             <tr>
-                <th>Producto</th>
-                <th>Stock Actual</th>
-                <th>Nivel Mínimo</th>
-                <th>Faltante para Mínimo</th>
+                <th>Nombre_Producto</th>
+                <th>Stock</th>
+                <th>Stock_Minimo</th>
                 <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>Cerveza Pacífico (Alta Rotación)</td>
-                <td class="status-low">5</td>
-                <td>10</td>
-                <td>5</td>
-                <td><button class="btn-action">Añadir a Pedido</button> <button class="btn-ignore">Ignorar</button></td>
-            </tr>
-            <tr>
-                <td>Leche Deslactosada 1L</td>
-                <td class="status-low">2</td>
-                <td>3</td>
-                <td>1</td>
-                <td><button class="btn-action">Añadir a Pedido</button> <button class="btn-ignore">Ignorar</button></td>
-            </tr>
-            <tr>
-                <td>Tonayán Reposado (Botella)</td>
-                <td class="status-low">0</td>
-                <td>5</td>
-                <td>5</td>
-                <td><button class="btn-action">Añadir a Pedido</button> <button class="btn-ignore">Ignorar</button></td>
-            </tr>
+            <!-- Los datos se cargarán dinámicamente desde la base de datos -->
         </tbody>
     </table>
     
@@ -63,5 +43,32 @@
         <button class="btn-action btn-generate" onclick="alert('Generando Orden de Compra con productos seleccionados...')">Generar Orden de Compra</button>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('http://localhost:8080/api/obtenerProductosBajoStock')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.querySelector('tbody');
+            data.forEach(producto => {
+                const row = document.createElement('tr');
+                if (producto.Stock <= producto.Stock_Minimo) {
+                    row.classList.add('alert-row');
+                }
+                row.innerHTML = `
+                    <td>${producto.Nombre_Producto}</td>
+                    <td>${producto.Stock}</td>
+                    <td>${producto.Stock_Minimo}</td>
+                    <td><button class="btn-action">Añadir a Pedido</button> <button class="btn-ignore">Ignorar</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        })
+        .catch(error => {
+            console.error('Error al cargar productos:', error);
+            alert('Error al cargar los datos de la base de datos.');
+        });
+});
+</script>
 </body>
 </html>

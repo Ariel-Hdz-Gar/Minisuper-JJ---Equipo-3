@@ -46,11 +46,6 @@
 
 <div class="container">
     <div class="left-panel">
-        <div class="search-bar">
-            <input type="text" placeholder="Escanea código de barras o busca producto..." autofocus>
-            <button>🔍 Buscar</button>
-        </div>
-
         <table>
             <thead>
                 <tr>
@@ -63,36 +58,17 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>75010553</td>
-                    <td>Coca Cola 600ml</td>
-                    <td>2</td>
-                    <td>$18.00</td>
-                    <td>$36.00</td>
-                    <td><button class="btn-delete">X</button></td>
-                </tr>
-                <tr>
-                    <td>75010001</td>
-                    <td>Papas Sabritas Sal 45g</td>
-                    <td>1</td>
-                    <td>$22.00</td>
-                    <td>$22.00</td>
-                    <td><button class="btn-delete">X</button></td>
-                </tr>
-                <tr>
-                    <td>PROD-099</td>
-                    <td>Tortillas de Harina (Paq)</td>
-                    <td>1</td>
-                    <td>$30.00</td>
-                    <td>$30.00</td>
-                    <td><button class="btn-delete">X</button></td>
-                </tr>
                 <tr><td colspan="6" style="height: 200px; text-align: center; color: #ccc;">Escanee más productos...</td></tr>
             </tbody>
         </table>
     </div>
 
     <div class="right-panel">
+        <div id="productos-disponibles" style="margin-bottom: 20px;">
+            <h3>Productos Disponibles</h3>
+            <ul id="productos-lista" style="list-style: none; padding: 0;"></ul>
+        </div>
+
         <div>
             <div class="client-info">
                 <strong>Cliente:</strong> Público General <a href="#" style="color: blue;">[Cambiar]</a>
@@ -107,13 +83,718 @@
 
         <div class="payment-methods">
             <p style="text-align: center; color: #555;">Seleccione Método de Pago:</p>
-            <button class="btn-pay btn-cash" onclick="alert('Abriendo cajón de dinero... Cambio calculado.')">💵 Cobrar Efectivo</button>
-            <button class="btn-pay btn-mp" onclick="alert('Enviando solicitud a terminal Mercado Pago...')">🔷 Mercado Pago</button>
-            <button class="btn-pay btn-credit" onclick="alert('Registrar venta a crédito (Fiado) para cliente registrado.')">📝 Venta a Crédito</button>
+            <button class="btn-pay btn-cash"   onclick="cobrar('Efectivo')">💵 Cobrar Efectivo</button>
+            <button class="btn-pay btn-mp"     onclick="cobrar('Tarjeta')">🔷 Mercado Pago</button>
+            <button class="btn-pay btn-credit" onclick="abrirCredito()">📝 Venta a Crédito</button>
             <button style="margin-top: 10px; background: transparent; border: 1px solid #ccc; padding: 10px; cursor: pointer; color: #555;">Cancelar Venta</button>
         </div>
     </div>
 </div>
+<!-- OVERLAY DE CLIENTE -->
+<div id="overlay-cliente" style="
+    display: none; position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%; background: rgba(0,0,0,0.5);
+    z-index: 1000; justify-content: center; align-items: center;">
+    
+    <div style="background: white; border-radius: 10px; padding: 30px; 
+                width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+        
+        <h2 style="margin-top:0; color: #2c3e50;">Seleccionar Cliente</h2>
+
+        <!-- Pregunta inicial -->
+        <div id="paso-pregunta">
+            <p style="font-size: 16px;">¿El cliente ya está registrado?</p>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button onclick="mostrarPaso('buscar')" style="
+                    flex:1; padding: 12px; background: #27ae60; color: white;
+                    border: none; border-radius: 6px; font-size: 16px; cursor: pointer;">
+                    ✅ Sí
+                </button>
+                <button onclick="mostrarPaso('nuevo')" style="
+                    flex:1; padding: 12px; background: #2c3e50; color: white;
+                    border: none; border-radius: 6px; font-size: 16px; cursor: pointer;">
+                    ➕ No, crear nuevo
+                </button>
+            </div>
+        </div>
+
+        <!-- Paso: Buscar cliente existente -->
+        <div id="paso-buscar" style="display:none;">
+            <label style="font-weight:bold;">Buscar cliente:</label>
+            <input id="input-buscar-cliente" type="text" placeholder="Escribe el nombre..." 
+                oninput="filtrarClientes()" style="
+                width: 100%; padding: 10px; margin: 10px 0;
+                border: 1px solid #ccc; border-radius: 5px; 
+                font-size: 15px; box-sizing: border-box;">
+            <ul id="lista-clientes" style="
+                list-style: none; padding: 0; max-height: 200px; 
+                overflow-y: auto; border: 1px solid #eee; border-radius: 5px;">
+            </ul>
+            <button onclick="mostrarPaso('pregunta')" style="
+                margin-top: 15px; width: 100%; padding: 10px;
+                background: transparent; border: 1px solid #ccc;
+                border-radius: 6px; cursor: pointer; color: #555;">
+                ← Volver
+            </button>
+        </div>
+
+        <!-- Paso: Crear nuevo cliente -->
+        <div id="paso-nuevo" style="display:none;">
+            <label style="font-weight:bold;">Nombre del cliente:</label>
+            <input id="input-nombre-cliente" type="text" placeholder="Nombre completo" style="
+                width: 100%; padding: 10px; margin: 8px 0 15px 0;
+                border: 1px solid #ccc; border-radius: 5px;
+                font-size: 15px; box-sizing: border-box;">
+
+            <label style="font-weight:bold;">Teléfono:</label>
+            <input id="input-telefono-cliente" type="text" placeholder="10 dígitos" style="
+                width: 100%; padding: 10px; margin: 8px 0 20px 0;
+                border: 1px solid #ccc; border-radius: 5px;
+                font-size: 15px; box-sizing: border-box;">
+
+            <button onclick="crearCliente()" style="
+                width: 100%; padding: 12px; background: #27ae60;
+                color: white; border: none; border-radius: 6px;
+                font-size: 16px; cursor: pointer; font-weight: bold;">
+                💾 Guardar Cliente
+            </button>
+            <button onclick="mostrarPaso('pregunta')" style="
+                margin-top: 10px; width: 100%; padding: 10px;
+                background: transparent; border: 1px solid #ccc;
+                border-radius: 6px; cursor: pointer; color: #555;">
+                ← Volver
+            </button>
+        </div>
+
+        <!-- Botón cerrar -->
+        <button onclick="cerrarOverlay()" style="
+            margin-top: 15px; width: 100%; padding: 10px;
+            background: #e74c3c; color: white; border: none;
+            border-radius: 6px; cursor: pointer; font-size: 15px;">
+            ✖ Cancelar
+        </button>
+    </div>
+</div>
+<!-- OVERLAY DE PAGO -->
+<div id="overlay-pago" style="
+    display: none; position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%; background: rgba(0,0,0,0.5);
+    z-index: 1000; justify-content: center; align-items: center;">
+
+    <div style="background: white; border-radius: 10px; padding: 30px;
+                width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+
+        <h2 id="overlay-pago-titulo" style="margin-top:0; color: #2c3e50;"></h2>
+
+        <div style="background: #f8f9fa; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+            <p style="margin:0; font-size: 15px; color: #555;">Total a pagar:</p>
+            <h1 id="overlay-pago-total" style="margin: 5px 0 0 0; color: #2c3e50; font-size: 42px;"></h1>
+        </div>
+
+        <!-- Solo visible en Efectivo -->
+        <div id="seccion-efectivo" style="display:none;">
+            <label style="font-weight: bold;">Monto recibido:</label>
+            <input id="input-monto-recibido" type="number" min="0" step="0.01"
+                placeholder="$0.00" oninput="calcularCambio()" style="
+                width: 100%; padding: 12px; margin: 8px 0 15px 0;
+                border: 2px solid #27ae60; border-radius: 6px;
+                font-size: 22px; box-sizing: border-box; text-align: right;">
+
+            <div style="background: #eafaf1; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <p style="margin:0; font-size: 15px; color: #555;">Cambio:</p>
+                <h2 id="display-cambio" style="margin: 5px 0 0 0; color: #27ae60; font-size: 32px;">$0.00</h2>
+            </div>
+
+            <p id="error-monto" style="color: #e74c3c; display:none; margin-bottom: 10px;">
+                ⚠️ El monto recibido no puede ser menor al total.
+            </p>
+        </div>
+
+        <!-- Solo visible en Tarjeta -->
+        <div id="seccion-tarjeta" style="display:none;">
+            <div style="background: #eaf4fb; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <p style="margin:0; color: #555; font-size: 15px;">
+                    🔷 La terminal cobrará el monto exacto.<br>
+                    <strong>Confirma que el pago fue procesado correctamente.</strong>
+                </p>
+            </div>
+        </div>
+
+        <!-- Botones -->
+        <button id="btn-confirmar-pago" onclick="confirmarPago()" style="
+            width: 100%; padding: 14px; font-size: 17px; font-weight: bold;
+            color: white; border: none; border-radius: 8px; cursor: pointer;">
+            ✅ Confirmar Pago
+        </button>
+        <button onclick="cerrarOverlayPago()" style="
+            margin-top: 10px; width: 100%; padding: 10px;
+            background: transparent; border: 1px solid #ccc;
+            border-radius: 6px; cursor: pointer; color: #555; font-size: 15px;">
+            ✖ Cancelar
+        </button>
+    </div>
+</div>
+<!-- OVERLAY DE CRÉDITO -->
+<div id="overlay-credito" style="
+    display: none; position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%; background: rgba(0,0,0,0.5);
+    z-index: 1000; justify-content: center; align-items: center;">
+
+    <div style="background: white; border-radius: 10px; padding: 30px;
+                width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+
+        <h2 style="margin-top:0; color: #e67e22;">📝 Venta a Crédito</h2>
+
+        <!-- Resumen -->
+        <div style="background: #fef9f0; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+            <p style="margin:0; font-size: 15px; color: #555;">Total de la venta:</p>
+            <h1 id="credito-total" style="margin: 5px 0 0 0; color: #2c3e50; font-size: 40px;"></h1>
+        </div>
+
+        <!-- Cliente -->
+        <div style="background: #f1f1f1; border-radius: 8px; padding: 12px; margin-bottom: 20px;">
+            <p style="margin:0; font-size: 14px; color: #555;">Cliente:</p>
+            <p id="credito-cliente" style="margin: 4px 0 0 0; font-size: 17px; 
+               font-weight: bold; color: #2c3e50;"></p>
+        </div>
+
+        <!-- Pago inicial (opcional) -->
+        <label style="font-weight: bold;">Pago inicial (opcional):</label>
+        <input id="input-pago-inicial" type="number" min="0" step="0.01"
+            placeholder="$0.00 — dejar vacío si no abona nada"
+            oninput="calcularPendiente()" style="
+            width: 100%; padding: 12px; margin: 8px 0 15px 0;
+            border: 2px solid #e67e22; border-radius: 6px;
+            font-size: 20px; box-sizing: border-box; text-align: right;">
+
+        <!-- Monto pendiente -->
+        <div style="background: #fdecea; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+            <p style="margin:0; font-size: 14px; color: #555;">Monto pendiente (adeudo):</p>
+            <h2 id="display-pendiente" style="margin: 5px 0 0 0; color: #e74c3c; font-size: 30px;"></h2>
+        </div>
+
+        <!-- Fecha límite informativa -->
+        <div style="background: #eaf4fb; border-radius: 8px; padding: 12px; margin-bottom: 20px;">
+            <p style="margin:0; font-size: 14px; color: #2980b9;">
+                📅 Fecha límite de pago: <strong id="credito-fecha-limite"></strong>
+            </p>
+        </div>
+
+        <p id="error-credito" style="color: #e74c3c; display:none; margin-bottom: 10px;">
+            ⚠️ El pago inicial no puede ser mayor al total.
+        </p>
+
+        <!-- Validación: cliente genérico no puede tener crédito -->
+        <p id="error-cliente-credito" style="color: #e74c3c; display:none; margin-bottom: 10px;">
+            ⚠️ Selecciona un cliente registrado antes de aplicar crédito.
+        </p>
+
+        <button id="btn-confirmar-credito" onclick="confirmarCredito()" style="
+            width: 100%; padding: 14px; font-size: 17px; font-weight: bold;
+            color: white; background: #e67e22; border: none; 
+            border-radius: 8px; cursor: pointer;">
+            ✅ Confirmar Venta a Crédito
+        </button>
+        <button onclick="cerrarOverlayCredito()" style="
+            margin-top: 10px; width: 100%; padding: 10px;
+            background: transparent; border: 1px solid #ccc;
+            border-radius: 6px; cursor: pointer; color: #555; font-size: 15px;">
+            ✖ Cancelar
+        </button>
+    </div>
+</div>
+<script>
+    // Variable global para el cliente seleccionado
+let clienteActual = { id: 1, nombre: "Público General" };
+let todosLosClientes = [];
+
+// Abrir overlay al hacer clic en [Cambiar]
+document.querySelector('.client-info a').addEventListener('click', function(e) {
+    e.preventDefault();
+    abrirOverlay();
+});
+
+function abrirOverlay() {
+    // Cargar clientes frescos cada vez que se abre
+    fetch('http://localhost:8080/api/obtenerClientes')
+        .then(res => res.json())
+        .then(data => {
+            todosLosClientes = data;
+        })
+        .catch(err => console.error('Error al cargar clientes:', err));
+
+    mostrarPaso('pregunta');
+    document.getElementById('overlay-cliente').style.display = 'flex';
+}
+
+function cerrarOverlay() {
+    document.getElementById('overlay-cliente').style.display = 'none';
+    // Limpiar inputs
+    document.getElementById('input-buscar-cliente').value = '';
+    document.getElementById('input-nombre-cliente').value = '';
+    document.getElementById('input-telefono-cliente').value = '';
+    document.getElementById('lista-clientes').innerHTML = '';
+}
+
+function mostrarPaso(paso) {
+    document.getElementById('paso-pregunta').style.display = 'none';
+    document.getElementById('paso-buscar').style.display   = 'none';
+    document.getElementById('paso-nuevo').style.display    = 'none';
+    document.getElementById(`paso-${paso}`).style.display  = 'block';
+
+    // Si va a buscar, mostrar todos los clientes de entrada
+    if (paso === 'buscar') filtrarClientes();
+}
+
+function filtrarClientes() {
+    const filtro = document.getElementById('input-buscar-cliente').value.toLowerCase();
+    const ul     = document.getElementById('lista-clientes');
+    ul.innerHTML = '';
+
+    const filtrados = todosLosClientes.filter(c =>
+        c.Nombre_cliente.toLowerCase().includes(filtro)
+    );
+
+    if (filtrados.length === 0) {
+        ul.innerHTML = '<li style="padding:10px; color:#999;">Sin resultados</li>';
+        return;
+    }
+
+    filtrados.forEach(cliente => {
+        const li = document.createElement('li');
+        li.textContent = `${cliente.Nombre_cliente} — ${cliente.Telefono_cliente}`;
+        li.style.cssText = 'padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;';
+        li.addEventListener('mouseover', () => li.style.background = '#f0f0f0');
+        li.addEventListener('mouseout',  () => li.style.background = 'white');
+        li.addEventListener('click', () => seleccionarCliente(cliente));
+        ul.appendChild(li);
+    });
+}
+
+function seleccionarCliente(cliente) {
+    clienteActual = { id: cliente.Id_clientes, nombre: cliente.Nombre_cliente };
+    actualizarClienteEnPanel();
+    cerrarOverlay();
+}
+
+function crearCliente() {
+    const nombre   = document.getElementById('input-nombre-cliente').value.trim();
+    const telefono = document.getElementById('input-telefono-cliente').value.trim();
+
+    if (!nombre || !telefono) {
+        alert('⚠️ Por favor completa nombre y teléfono.');
+        return;
+    }
+
+    const params = new URLSearchParams({ nombre, telefono });
+
+    fetch('http://localhost:8080/api/registrarCliente', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            clienteActual = { id: data.id_cliente, nombre: nombre };
+            actualizarClienteEnPanel();
+            cerrarOverlay();
+            alert(`✅ Cliente "${nombre}" registrado y seleccionado.`);
+        } else {
+            alert('❌ Error al registrar el cliente: ' + data.mensaje);
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('❌ Error de conexión con el servidor.');
+    });
+}
+
+function actualizarClienteEnPanel() {
+    document.querySelector('.client-info').innerHTML = 
+        `<strong>Cliente:</strong> ${clienteActual.nombre} <a href="#" style="color: blue;">[Cambiar]</a>`;
+    
+    // Re-asignar el event listener porque se regeneró el HTML
+    document.querySelector('.client-info a').addEventListener('click', function(e) {
+        e.preventDefault();
+        abrirOverlay();
+    });
+}
+document.addEventListener('DOMContentLoaded', function() {
+    // Cargar productos disponibles
+    fetch('http://localhost:8080/api/obtenerProductos')
+        .then(response => response.json())
+        .then(data => {
+            const ul = document.getElementById('productos-lista');
+            data.forEach(producto => {
+                const li = document.createElement('li');
+                li.textContent = `${producto.Nombre_Producto} - $${producto.Precio_Venta.toFixed(2)} (Stock: ${producto.Stock})`;
+                li.style.marginBottom = '5px';
+                li.style.cursor = 'pointer';
+                li.dataset.producto = JSON.stringify(producto);
+                li.addEventListener('click', () => agregarAlCarrito(producto));
+                ul.appendChild(li);
+            });
+        })
+        .catch(error => {
+            console.error('Error al cargar productos:', error);
+            alert('Error al cargar los productos.');
+        });
+
+    // Agregar event listeners a botones de eliminar existentes
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+            btn.closest('tr').remove();
+            recalcularTotales();
+        });
+    });
+
+    // Calcular totales iniciales
+    recalcularTotales();
+});
+
+function agregarAlCarrito(producto) {
+    const tbody = document.querySelector('tbody');
+    const existingRow = Array.from(tbody.rows).find(row => row.cells[0].textContent === String(producto.Id_Productos));
+
+    if (existingRow) {
+        const cantCell = existingRow.cells[2];
+        let cant = parseInt(cantCell.textContent);
+
+        // ✅ VALIDACIÓN: no permitir superar el stock
+        if (cant >= producto.Stock) {
+            alert(`⚠️ Stock insuficiente. Solo hay ${producto.Stock} unidad(es) disponible(s) de "${producto.Nombre_Producto}".`);
+            return; // Detiene la ejecución
+        }
+
+        cant++;
+        cantCell.textContent = cant;
+        const precioUnit = parseFloat(existingRow.cells[3].textContent.replace('$', ''));
+        existingRow.cells[4].textContent = `$${(cant * precioUnit).toFixed(2)}`;
+
+    } else {
+        // ✅ VALIDACIÓN: verificar que haya al menos 1 en stock
+        if (producto.Stock <= 0) {
+            alert(`⚠️ "${producto.Nombre_Producto}" está agotado.`);
+            return;
+        }
+
+        const rows = tbody.rows;
+        const insertIndex = rows.length - 1;
+        const row = tbody.insertRow(insertIndex);
+        row.innerHTML = `
+            <td>${producto.Id_Productos}</td>
+            <td>${producto.Nombre_Producto}</td>
+            <td>1</td>
+            <td>$${producto.Precio_Venta.toFixed(2)}</td>
+            <td>$${producto.Precio_Venta.toFixed(2)}</td>
+            <td><button class="btn-delete">X</button></td>
+        `;
+        row.querySelector('.btn-delete').addEventListener('click', () => {
+            row.remove();
+            recalcularTotales();
+        });
+    }
+    recalcularTotales();
+}
+// Variable para saber qué método está activo en el overlay
+let metodoPagoActual = '';
+
+function cobrar(metodoPago) {
+    // Validar que haya productos en el carrito
+    const tbody  = document.querySelector('tbody');
+    const filas  = Array.from(tbody.rows).filter(row => row.cells.length > 5);
+    if (filas.length === 0) {
+        alert('⚠️ No hay productos en el carrito.');
+        return;
+    }
+
+    metodoPagoActual = metodoPago;
+    const total = obtenerTotal();
+
+    // Configurar overlay según método
+    document.getElementById('overlay-pago-total').textContent = `$${total.toFixed(2)}`;
+    document.getElementById('seccion-efectivo').style.display = 'none';
+    document.getElementById('seccion-tarjeta').style.display  = 'none';
+    document.getElementById('error-monto').style.display      = 'none';
+    document.getElementById('input-monto-recibido').value     = '';
+    document.getElementById('display-cambio').textContent     = '$0.00';
+
+    const btnConfirmar = document.getElementById('btn-confirmar-pago');
+
+    if (metodoPago === 'Efectivo') {
+        document.getElementById('overlay-pago-titulo').textContent = '💵 Cobro en Efectivo';
+        document.getElementById('seccion-efectivo').style.display  = 'block';
+        btnConfirmar.style.background = '#27ae60';
+
+    } else if (metodoPago === 'Tarjeta') {
+        document.getElementById('overlay-pago-titulo').textContent = '🔷 Cobro con Tarjeta';
+        document.getElementById('seccion-tarjeta').style.display   = 'block';
+        btnConfirmar.style.background = '#009ee3';
+    }
+
+    document.getElementById('overlay-pago').style.display = 'flex';
+}
+
+function calcularCambio() {
+    const total   = obtenerTotal();
+    const recibido = parseFloat(document.getElementById('input-monto-recibido').value) || 0;
+    const cambio   = recibido - total;
+    const errorMsg = document.getElementById('error-monto');
+    const btnConf  = document.getElementById('btn-confirmar-pago');
+
+    if (recibido < total) {
+        document.getElementById('display-cambio').textContent = '$0.00';
+        document.getElementById('display-cambio').style.color = '#e74c3c';
+        errorMsg.style.display = 'block';
+        btnConf.disabled       = true;
+        btnConf.style.opacity  = '0.5';
+    } else {
+        document.getElementById('display-cambio').textContent = `$${cambio.toFixed(2)}`;
+        document.getElementById('display-cambio').style.color = '#27ae60';
+        errorMsg.style.display = 'none';
+        btnConf.disabled       = false;
+        btnConf.style.opacity  = '1';
+    }
+}
+
+function confirmarPago() {
+    const total    = obtenerTotal();
+    let montoRecibido = total; // Default para Tarjeta (monto exacto)
+    let cambio     = 0;
+
+    if (metodoPagoActual === 'Efectivo') {
+        montoRecibido = parseFloat(document.getElementById('input-monto-recibido').value) || 0;
+        if (montoRecibido < total) {
+            alert('⚠️ El monto recibido no puede ser menor al total.');
+            return;
+        }
+        cambio = montoRecibido - total;
+    }
+
+    enviarVenta(metodoPagoActual, total, montoRecibido, cambio);
+}
+
+function enviarVenta(metodoPago, total, montoRecibido, cambio) {
+    const tbody    = document.querySelector('tbody');
+    const filas    = Array.from(tbody.rows).filter(row => row.cells.length > 5);
+    const productos = filas.map(row => ({
+        id:       row.cells[0].textContent.trim(),
+        cantidad: parseInt(row.cells[2].textContent),
+        precio:   parseFloat(row.cells[3].textContent.replace('$', ''))
+    }));
+
+    const params = new URLSearchParams({
+        metodo_pago:    metodoPago,
+        subtotal:       total,
+        total:          total,
+        monto_recibido: montoRecibido,
+        cambio:         cambio,
+        id_cliente:     clienteActual.id,
+        productos:      JSON.stringify(productos)
+    });
+
+    fetch('http://localhost:8080/api/registrarVenta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            cerrarOverlayPago();
+
+            // Mostrar resumen
+            let msg = `✅ Venta #${data.id_venta} registrada.\n`;
+            msg    += `Total: $${total.toFixed(2)}\n`;
+            msg    += `Recibido: $${montoRecibido.toFixed(2)}\n`;
+            if (metodoPago === 'Efectivo') {
+                msg += `Cambio: $${cambio.toFixed(2)}`;
+            }
+            alert(msg);
+
+            // Limpiar carrito y resetear cliente
+            filas.forEach(row => row.remove());
+            recalcularTotales();
+            clienteActual = { id: 1, nombre: 'Público General' };
+            actualizarClienteEnPanel();
+
+        } else {
+            alert('❌ Error al registrar la venta: ' + data.mensaje);
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('❌ Error de conexión con el servidor.');
+    });
+}
+
+function cerrarOverlayPago() {
+    document.getElementById('overlay-pago').style.display  = 'none';
+    document.getElementById('btn-confirmar-pago').disabled = false;
+    document.getElementById('btn-confirmar-pago').style.opacity = '1';
+}
+
+function obtenerTotal() {
+    return parseFloat(
+        document.querySelector('.totals h1').textContent.replace('$', '')
+    ) || 0;
+}
+function recalcularTotales() {
+    const tbody = document.querySelector('tbody');
+    const rows = Array.from(tbody.rows).filter(row => row.cells.length > 5); // filas con datos
+    let subtotal = 0;
+    rows.forEach(row => {
+        const sub = parseFloat(row.cells[4].textContent.replace('$', ''));
+        subtotal += sub;
+    });
+    document.querySelector('.totals p:first-child').textContent = `Subtotal: $${subtotal.toFixed(2)}`;
+    document.querySelector('.totals h1').textContent = `$${subtotal.toFixed(2)}`;
+}
+function abrirCredito() {
+    const filas = Array.from(document.querySelector('tbody').rows)
+                       .filter(row => row.cells.length > 5);
+    if (filas.length === 0) {
+        alert('⚠️ No hay productos en el carrito.');
+        return;
+    }
+
+    const total = obtenerTotal();
+
+    // Validar que no sea cliente genérico
+    const errorCliente = document.getElementById('error-cliente-credito');
+    const btnConfirmar = document.getElementById('btn-confirmar-credito');
+    if (clienteActual.id === 1) {
+        errorCliente.style.display = 'block';
+        btnConfirmar.disabled      = true;
+        btnConfirmar.style.opacity = '0.5';
+    } else {
+        errorCliente.style.display = 'none';
+        btnConfirmar.disabled      = false;
+        btnConfirmar.style.opacity = '1';
+    }
+
+    // Calcular fecha límite (+5 días) para mostrarla
+    const hoy         = new Date();
+    const fechaLimite = new Date(hoy);
+    fechaLimite.setDate(hoy.getDate() + 5);
+    const opciones    = { day: '2-digit', month: '2-digit', year: 'numeric' };
+
+    // Llenar datos del overlay
+    document.getElementById('credito-total').textContent        = `$${total.toFixed(2)}`;
+    document.getElementById('credito-cliente').textContent      = clienteActual.nombre;
+    document.getElementById('display-pendiente').textContent    = `$${total.toFixed(2)}`;
+    document.getElementById('credito-fecha-limite').textContent = fechaLimite.toLocaleDateString('es-MX', opciones);
+    document.getElementById('input-pago-inicial').value         = '';
+    document.getElementById('error-credito').style.display      = 'none';
+
+    document.getElementById('overlay-credito').style.display = 'flex';
+}
+
+function calcularPendiente() {
+    const total        = obtenerTotal();
+    const pagoInicial  = parseFloat(document.getElementById('input-pago-inicial').value) || 0;
+    const pendiente    = total - pagoInicial;
+    const errorMsg     = document.getElementById('error-credito');
+    const btnConfirmar = document.getElementById('btn-confirmar-credito');
+
+    if (pagoInicial > total) {
+        errorMsg.style.display     = 'block';
+        btnConfirmar.disabled      = true;
+        btnConfirmar.style.opacity = '0.5';
+        document.getElementById('display-pendiente').textContent = `$${total.toFixed(2)}`;
+    } else {
+        errorMsg.style.display     = 'none';
+        btnConfirmar.disabled      = false;
+        btnConfirmar.style.opacity = '1';
+        document.getElementById('display-pendiente').textContent = `$${pendiente.toFixed(2)}`;
+    }
+}
+
+function confirmarCredito() {
+    if (clienteActual.id === 1) {
+        alert('⚠️ Debes seleccionar un cliente registrado para ventas a crédito.');
+        return;
+    }
+
+    const total       = obtenerTotal();
+    const pagoInicial = parseFloat(document.getElementById('input-pago-inicial').value) || 0;
+
+    if (pagoInicial > total) {
+        alert('⚠️ El pago inicial no puede ser mayor al total.');
+        return;
+    }
+
+    const pendiente = total - pagoInicial;
+
+    // Confirmar con el cajero
+    const msg = pagoInicial > 0
+        ? `¿Confirmar venta a crédito?\n\nTotal: $${total.toFixed(2)}\nAbono inicial: $${pagoInicial.toFixed(2)}\nAdeudo: $${pendiente.toFixed(2)}`
+        : `¿Confirmar venta a crédito sin abono inicial?\n\nAdeudo total: $${total.toFixed(2)}`;
+
+    if (!confirm(msg)) return;
+
+    enviarVentaCredito(total, pagoInicial, pendiente);
+}
+
+function enviarVentaCredito(total, montoRecibido, montoPendiente) {
+    const tbody    = document.querySelector('tbody');
+    const filas    = Array.from(tbody.rows).filter(row => row.cells.length > 5);
+    const productos = filas.map(row => ({
+        id:       row.cells[0].textContent.trim(),
+        cantidad: parseInt(row.cells[2].textContent),
+        precio:   parseFloat(row.cells[3].textContent.replace('$', ''))
+    }));
+
+    const params = new URLSearchParams({
+        metodo_pago:    'Credito',
+        subtotal:       total,
+        total:          total,
+        monto_recibido: montoRecibido,
+        cambio:         0,
+        es_credito:     'true',
+        id_cliente:     clienteActual.id,
+        productos:      JSON.stringify(productos)
+    });
+
+    fetch('http://localhost:8080/api/registrarVenta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            cerrarOverlayCredito();
+
+            let msg = `✅ Venta #${data.id_venta} registrada a crédito.\n`;
+            msg    += `Total: $${total.toFixed(2)}\n`;
+            if (montoRecibido > 0) msg += `Abono inicial: $${montoRecibido.toFixed(2)}\n`;
+            msg    += `Adeudo registrado: $${parseFloat(data.monto_pendiente).toFixed(2)}`;
+            alert(msg);
+
+            // Limpiar carrito y resetear cliente
+            filas.forEach(row => row.remove());
+            recalcularTotales();
+            clienteActual = { id: 1, nombre: 'Público General' };
+            actualizarClienteEnPanel();
+
+        } else {
+            alert('❌ Error al registrar la venta: ' + data.mensaje);
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('❌ Error de conexión con el servidor.');
+    });
+}
+
+function cerrarOverlayCredito() {
+    document.getElementById('overlay-credito').style.display  = 'none';
+    document.getElementById('btn-confirmar-credito').disabled = false;
+    document.getElementById('btn-confirmar-credito').style.opacity = '1';
+}
+</script>
 
 </body>
 </html>

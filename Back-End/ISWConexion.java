@@ -138,6 +138,39 @@ public class ISWConexion
         return json.toString();
     }
 
+    // Método para obtener todos los productos
+    public static String obtenerProductos()
+    {
+        String sql = "SELECT Id_Productos, Nombre_Producto, Precio_Venta, Stock FROM productos ORDER BY Nombre_Producto";
+        StringBuilder json = new StringBuilder("[");
+        try (Connection con = conectarDB();
+             PreparedStatement ps = con.prepareStatement(sql))
+        {
+            ResultSet rs = ps.executeQuery();
+            boolean first = true;
+            while (rs.next()) {
+                if (!first) json.append(",");
+                json.append("{\"Id_Productos\":\"");
+                json.append(rs.getString("Id_Productos"));
+                json.append("\",\"Nombre_Producto\":\"");
+                json.append(rs.getString("Nombre_Producto"));
+                json.append("\",\"Precio_Venta\":");
+                json.append(rs.getDouble("Precio_Venta"));
+                json.append(",\"Stock\":");
+                json.append(rs.getInt("Stock"));
+                json.append("}");
+                first = false;
+            }
+        }
+        catch (SQLException e)
+        {
+            System.out.println("Error al obtener productos: " + e.getMessage());
+            e.printStackTrace();
+        }
+        json.append("]");
+        return json.toString();
+    }
+
     // Método para registrar un nuevo producto
     public static String registrarProducto(String Id_Productos, String Nombre_Producto, 
         double Precio_Compra, double Precio_Venta, int Stock, int Stock_Minimo, int ID_Proveedores)
@@ -185,6 +218,176 @@ public class ISWConexion
         }
     }
 
+    public static String registrarVenta(int ID_Clientes, String Metodo_pago,
+    double Subtotal, double Total, double Monto_Recibido, double Cambio,
+    boolean esCredito, String productosJson)
+{
+    String sqlVenta = "INSERT INTO ventas (ID_Clientes, Fecha_venta, Hora_venta, Metodo_pago, Subtotal, Total, Monto_Recibido, Cambio) " +
+                      "VALUES (?, CURDATE(), CURTIME(), ?, ?, ?, ?, ?)";
+
+    String sqlDetalle = "INSERT INTO Detalle_Ventas (Id_Ventas, ID_Productos, Cantidad, Precio_unitario) " +
+                        "VALUES (?, ?, ?, ?)";
+    
+    String sqlAdeudo = "INSERT INTO adeudos (Id_Ven, Id_Cli, Monto_Ad, Fecha_Limite, Dias_Atraso) " +
+                   "VALUES (?, ?, ?, DATE_ADD(CURDATE(), INTERVAL 5 DAY), 0)";
+
+    Connection con = null;
+    try {
+        con = conectarDB();
+        con.setAutoCommit(false); // Iniciar transacción
+
+        // 1. Insertar la venta principal
+        PreparedStatement psVenta = con.prepareStatement(sqlVenta, Statement.RETURN_GENERATED_KEYS);
+        psVenta.setInt(1, ID_Clientes);
+        psVenta.setString(2, Metodo_pago);
+        psVenta.setDouble(3, Subtotal);
+        psVenta.setDouble(4, Total);
+        psVenta.setDouble(5, Monto_Recibido);
+        psVenta.setDouble(6, Cambio);
+        psVenta.executeUpdate();
+
+        // Obtener el ID de la venta recién insertada
+        ResultSet generatedKeys = psVenta.getGeneratedKeys();
+        if (!generatedKeys.next()) {
+            con.rollback();
+            return "error";
+        }
+        int idVenta = generatedKeys.getInt(1);
+
+        // 2. Parsear productos y insertar detalle
+        // Formato esperado: [{"id":"1","cantidad":2,"precio":18.00}, ...]
+        String[] items = productosJson.replace("[","").replace("]","").split("\\},\\{");
+        PreparedStatement psDetalle = con.prepareStatement(sqlDetalle);
+
+        for (String item : items) {
+            item = item.replace("{","").replace("}","");
+            String[] fields = item.split(",");
+            String idProducto = "";
+            int cantidad = 0;
+            double precio = 0.0;
+
+            for (String field : fields) {
+                String[] kv = field.split(":");
+                if (kv.length == 2) {
+                    String key = kv[0].replace("\"","").trim();
+                    String val = kv[1].replace("\"","").trim();
+                    if (key.equals("id"))       idProducto = val;
+                    if (key.equals("cantidad")) cantidad   = Integer.parseInt(val);
+                    if (key.equals("precio"))   precio     = Double.parseDouble(val);
+                }
+            }
+
+            psDetalle.setInt(1, idVenta);
+            psDetalle.setString(2, idProducto);
+            psDetalle.setInt(3, cantidad);
+            psDetalle.setDouble(4, precio);
+            psDetalle.addBatch();
+        }
+
+        psDetalle.executeBatch();
+
+        // 3. Descontar stock de cada producto
+        String sqlStock = "UPDATE productos SET Stock = Stock - ? WHERE Id_Productos = ?";
+        PreparedStatement psStock = con.prepareStatement(sqlStock);
+
+        for (String item : items) {
+            item = item.replace("{","").replace("}","");
+            String[] fields = item.split(",");
+            String idProducto = "";
+            int cantidad = 0;
+
+            for (String field : fields) {
+                String[] kv = field.split(":");
+                if (kv.length == 2) {
+                    String key = kv[0].replace("\"","").trim();
+                    String val = kv[1].replace("\"","").trim();
+                    if (key.equals("id"))       idProducto = val;
+                    if (key.equals("cantidad")) cantidad   = Integer.parseInt(val);
+                }
+            }
+
+            psStock.setInt(1, cantidad);
+            psStock.setString(2, idProducto);
+            psStock.addBatch();
+        }
+
+        psStock.executeBatch();
+        if (esCredito) {
+            double montoPendiente = Total - Monto_Recibido;
+            if (montoPendiente > 0) {
+                PreparedStatement psAdeudo = con.prepareStatement(sqlAdeudo);
+                psAdeudo.setInt(1, idVenta);
+                psAdeudo.setInt(2, ID_Clientes);
+                psAdeudo.setDouble(3, montoPendiente);
+                psAdeudo.executeUpdate();
+            }
+        }
+        con.commit(); // Todo bien, confirmar transacción
+        return "success:" + idVenta;
+
+    } catch (SQLException e) {
+        System.out.println("Error al registrar venta: " + e.getMessage());
+        e.printStackTrace();
+        try { if (con != null) con.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+        return "error";
+    } finally {
+        try { if (con != null) con.close(); } catch (SQLException e) { e.printStackTrace(); }
+    }
+}
+public static String obtenerClientes()
+{
+    String sql = "SELECT Id_clientes, Nombre_cliente, Telefono_cliente FROM clientes ORDER BY Nombre_cliente";
+    StringBuilder json = new StringBuilder("[");
+    try (Connection con = conectarDB();
+         PreparedStatement ps = con.prepareStatement(sql))
+    {
+        ResultSet rs = ps.executeQuery();
+        boolean first = true;
+        while (rs.next()) {
+            if (!first) json.append(",");
+            json.append("{\"Id_clientes\":");
+            json.append(rs.getInt("Id_clientes"));
+            json.append(",\"Nombre_cliente\":\"");
+            json.append(rs.getString("Nombre_cliente"));
+            json.append("\",\"Telefono_cliente\":\"");
+            json.append(rs.getString("Telefono_cliente"));
+            json.append("\"}");
+            first = false;
+        }
+    }
+    catch (SQLException e)
+    {
+        System.out.println("Error al obtener clientes: " + e.getMessage());
+        e.printStackTrace();
+    }
+    json.append("]");
+    return json.toString();
+}
+public static String registrarCliente(String Nombre_cliente, String Telefono_cliente)
+{
+    String sql = "INSERT INTO clientes (Nombre_cliente, Telefono_cliente) VALUES (?, ?)";
+    try (Connection con = conectarDB();
+         PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS))
+    {
+        ps.setString(1, Nombre_cliente);
+        ps.setString(2, Telefono_cliente);
+        int resultado = ps.executeUpdate();
+        if (resultado > 0) {
+            ResultSet keys = ps.getGeneratedKeys();
+            if (keys.next()) {
+                int nuevoId = keys.getInt(1);
+                return "success:" + nuevoId;
+            }
+        }
+        return "error";
+    }
+    catch (SQLException e)
+    {
+        System.out.println("Error al registrar cliente: " + e.getMessage());
+        e.printStackTrace();
+        return "error";
+    }
+}
     public static String validarLogin(String Nombre_Completo, String Contraseña)
     {
         String sql = "SELECT r.Id_roles FROM usuarios u " +
@@ -236,6 +439,10 @@ public class ISWConexion
             server.createContext("/api/registrarProducto", new RegistrarProductoHandler());
             server.createContext("/api/obtenerProveedores", new ObtenerProveedoresHandler());
             server.createContext("/api/obtenerProductosBajoStock", new ObtenerProductosBajoStockHandler());
+            server.createContext("/api/obtenerProductos", new ObtenerProductosHandler());
+            server.createContext("/api/registrarVenta", new RegistrarVentaHandler());
+            server.createContext("/api/obtenerClientes",  new ObtenerClientesHandler());
+            server.createContext("/api/registrarCliente", new RegistrarClienteHandler());
             server.setExecutor(null);
             server.start();
             System.out.println("Servidor iniciado en http://localhost:8080");
@@ -499,7 +706,181 @@ public class ISWConexion
             }
         }
     }
+    static class ObtenerProductosHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if ("GET".equals(exchange.getRequestMethod())) {
+                System.out.println("Solicitando lista de productos");
+                
+                // Obtener productos de la BD
+                String productosJson = obtenerProductos();
+                
+                // Enviar respuesta
+                exchange.getResponseHeaders().set("Content-Type", "application/json");
+                exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                exchange.sendResponseHeaders(200, productosJson.length());
+                OutputStream os = exchange.getResponseBody();
+                os.write(productosJson.getBytes());
+                os.close();
+            } else if ("OPTIONS".equals(exchange.getRequestMethod())) {
+                exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, OPTIONS");
+                exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+                exchange.sendResponseHeaders(204, -1);
+                exchange.close();
+            }
+        }
+    }
+    static class RegistrarVentaHandler implements HttpHandler {
+    @Override
+    public void handle(HttpExchange exchange) throws IOException {
+        if ("POST".equals(exchange.getRequestMethod())) {
+            InputStream is = exchange.getRequestBody();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+            StringBuilder body = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                body.append(line);
+            }
 
+            Map<String, String> params = parseParams(body.toString());
+
+            int ID_Clientes = 1;
+            if (params.get("id_cliente") != null && !params.get("id_cliente").isEmpty()) 
+            {
+               ID_Clientes = Integer.parseInt(params.get("id_cliente"));
+            }
+            String Metodo_pago    = params.get("metodo_pago");
+            double Subtotal       = 0, Total = 0, Monto_Recibido = 0;
+            String productosJson  = "";
+            boolean esCredito = false;
+            if ("true".equals(params.get("es_credito"))) esCredito = true;
+            double Cambio = 0;
+            try {
+                if (params.get("subtotal")      != null) Subtotal       = Double.parseDouble(params.get("subtotal"));
+                if (params.get("total")         != null) Total          = Double.parseDouble(params.get("total"));
+                if (params.get("monto_recibido")!= null) Monto_Recibido = Double.parseDouble(params.get("monto_recibido"));
+                if (params.get("cambio")        != null) Cambio         = Double.parseDouble(params.get("cambio"));
+                if (params.get("productos")     != null) productosJson  = java.net.URLDecoder.decode(params.get("productos"), "UTF-8");
+                if (params.get("id_cliente")    != null && !params.get("id_cliente").isEmpty())
+                    ID_Clientes = Integer.parseInt(params.get("id_cliente"));
+            } catch (NumberFormatException e) {
+                System.out.println("Error al parsear parámetros: " + e.getMessage());
+            }
+
+            try {
+                if (params.get("subtotal")        != null) Subtotal       = Double.parseDouble(params.get("subtotal"));
+                if (params.get("total")            != null) Total          = Double.parseDouble(params.get("total"));
+                if (params.get("monto_recibido")   != null) Monto_Recibido = Double.parseDouble(params.get("monto_recibido"));
+                if (params.get("cambio")           != null) Cambio         = Double.parseDouble(params.get("cambio"));
+                if (params.get("productos")        != null) productosJson  = java.net.URLDecoder.decode(params.get("productos"), "UTF-8");
+            } catch (NumberFormatException e) {
+                System.out.println("Error al parsear parámetros: " + e.getMessage());
+            }
+
+            System.out.println("Registrando venta - Método: " + Metodo_pago + ", Total: " + Total);
+
+            String result = registrarVenta(ID_Clientes, Metodo_pago, Subtotal, Total, 
+                               Monto_Recibido, Cambio, esCredito, productosJson);
+
+            String response;
+            int statusCode;
+            if (result.startsWith("success")) {
+                String[] parts    = result.split(":");
+                String idVenta    = parts[1];
+                String montoPend  = parts.length > 2 ? parts[2] : "0.0";
+                response  = "{\"success\": true, \"id_venta\": " + idVenta + 
+                ", \"monto_pendiente\": " + montoPend + 
+                ", \"mensaje\": \"Venta registrada correctamente\"}";
+                statusCode = 200;
+            } 
+            else {
+                response  = "{\"success\": false, \"mensaje\": \"Error al registrar la venta\"}";
+                statusCode = 500;
+            }
+
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.sendResponseHeaders(statusCode, response.length());
+            OutputStream os = exchange.getResponseBody();
+            os.write(response.getBytes());
+            os.close();
+
+        } else if ("OPTIONS".equals(exchange.getRequestMethod())) {
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "POST, OPTIONS");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+            exchange.sendResponseHeaders(204, -1);
+            exchange.close();
+        }
+    }
+}
+static class ObtenerClientesHandler implements HttpHandler {
+    @Override
+    public void handle(HttpExchange exchange) throws IOException {
+        if ("GET".equals(exchange.getRequestMethod())) {
+            System.out.println("Solicitando lista de clientes");
+            String clientesJson = obtenerClientes();
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.sendResponseHeaders(200, clientesJson.length());
+            OutputStream os = exchange.getResponseBody();
+            os.write(clientesJson.getBytes());
+            os.close();
+        } else if ("OPTIONS".equals(exchange.getRequestMethod())) {
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, OPTIONS");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+            exchange.sendResponseHeaders(204, -1);
+            exchange.close();
+        }
+    }
+}
+
+static class RegistrarClienteHandler implements HttpHandler {
+    @Override
+    public void handle(HttpExchange exchange) throws IOException {
+        if ("POST".equals(exchange.getRequestMethod())) {
+            InputStream is = exchange.getRequestBody();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+            StringBuilder body = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) body.append(line);
+
+            Map<String, String> params = parseParams(body.toString());
+            String Nombre_cliente   = params.get("nombre");
+            String Telefono_cliente = params.get("telefono");
+
+            System.out.println("Registrando cliente: " + Nombre_cliente);
+
+            String result = registrarCliente(Nombre_cliente, Telefono_cliente);
+
+            String response;
+            int statusCode;
+            if (result.startsWith("success")) {
+                String idCliente = result.split(":")[1];
+                response   = "{\"success\": true, \"id_cliente\": " + idCliente + ", \"mensaje\": \"Cliente registrado correctamente\"}";
+                statusCode = 200;
+            } else {
+                response   = "{\"success\": false, \"mensaje\": \"Error al registrar cliente\"}";
+                statusCode = 500;
+            }
+
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.sendResponseHeaders(statusCode, response.length());
+            OutputStream os = exchange.getResponseBody();
+            os.write(response.getBytes());
+            os.close();
+        } else if ("OPTIONS".equals(exchange.getRequestMethod())) {
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "POST, OPTIONS");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+            exchange.sendResponseHeaders(204, -1);
+            exchange.close();
+        }
+    }
+}
     static Map<String, String> parseParams(String body) {
         Map<String, String> params = new HashMap<>();
         if (body != null && !body.isEmpty()) {

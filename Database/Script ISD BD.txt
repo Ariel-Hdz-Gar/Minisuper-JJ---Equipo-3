@@ -1,0 +1,82 @@
+CREATE TABLE Adeudos (
+  Id_Adeudo INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+  Id_Ven INTEGER UNSIGNED NOT NULL,
+  Id_Cli INTEGER UNSIGNED NOT NULL,
+  Monto_Ad INTEGER UNSIGNED NULL,
+  Fecha_Limite DATE NULL,
+  Dias_Atraso INTEGER UNSIGNED NULL,
+  PRIMARY KEY(Id_Adeudo)
+);
+
+CREATE TABLE Clientes (
+  Id_clientes INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+  Nombre_cliente VARCHAR(30) NULL,
+  Telefono_cliente INTEGER UNSIGNED NULL,
+  Saldo DECIMAL NULL,
+  Limite_credito DECIMAL NULL,
+  PRIMARY KEY(Id_clientes)
+);
+
+CREATE TABLE Detalle_Ventas (
+  Id_detalles INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+  ID_Ventas INTEGER UNSIGNED NOT NULL,
+  ID_Productos INTEGER UNSIGNED NOT NULL,
+  Cantidad INTEGER UNSIGNED NULL,
+  Precio_unitario DECIMAL NULL,
+  PRIMARY KEY(Id_detalles, ID_Ventas, ID_Productos)
+);
+
+CREATE TABLE Pago_Clientes (
+  Id_pago INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+  ID_ClientesP INTEGER UNSIGNED NOT NULL,
+  Monto_Pagado DECIMAL NULL,
+  Fecha_pago DATE NULL,
+  Hora_pago TIME NULL,
+  PRIMARY KEY(Id_pago)
+);
+
+CREATE TABLE Productos (
+  Id_Productos INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+  ID_Proveedores INTEGER UNSIGNED NOT NULL,
+  Nombre_Producto VARCHAR(30) NULL,
+  Precio_Compra DECIMAL NULL,
+  Precio_Venta DECIMAL NULL,
+  Stock INTEGER UNSIGNED NULL,
+  Stock_Minimo INTEGER UNSIGNED NULL,
+  PRIMARY KEY(Id_Productos)
+);
+
+CREATE TABLE Proveedores (
+  Id_proveedores INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+  Nombre_proveedor VARCHAR(20) NULL,
+  PRIMARY KEY(Id_proveedores)
+);
+
+CREATE TABLE Roles (
+  Id_roles INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+  Nombre__Rol VARCHAR(20) NULL,
+  PRIMARY KEY(Id_roles)
+);
+
+CREATE TABLE Usuarios (
+  Id_Usuarios INTEGER NOT NULL AUTO_INCREMENT,
+  ID_Roles INTEGER UNSIGNED NOT NULL,
+  Nombre_Completo VARCHAR(20) NULL,
+  Contraseña VARCHAR(10) NULL,
+  PRIMARY KEY(Id_Usuarios)
+);
+
+CREATE TABLE Ventas (
+  Id_ventas INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
+  ID_Clientes INTEGER UNSIGNED NOT NULL,
+  ID_Usuario INTEGER NOT NULL,
+  Fecha_venta DATE NULL,
+  Hora_venta TIME NULL,
+  Metodo_pago VARCHAR(10) NULL,
+  Subtotal DECIMAL NULL,
+  Total DECIMAL NULL,
+  Monto_Recibido DECIMAL NULL,
+  Cambio DECIMAL NULL,
+  PRIMARY KEY(Id_ventas)
+);
+

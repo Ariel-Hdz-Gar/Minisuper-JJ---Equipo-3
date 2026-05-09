@@ -22,10 +22,9 @@
     <h2>📈 Reporte Histórico de Ventas</h2>
     
     <div class="filters">
-        <div><label>Fecha Inicio:</label> <input type="date" value="2025-11-01"></div>
-        <div><label>Fecha Fin:</label> <input type="date" value="2025-12-12"></div>
-        <div><label>Tipo de Reporte:</label> <select><option>Ventas por Período</option><option>Rotación de Productos (RF14)</option></select></div>
-        <button class="btn-generate" onclick="alert('Generando Reporte...')">Generar Reporte</button>
+        <div><label>Fecha Inicio:</label> <input type="date" id="fecha-inicio"></div>
+        <div><label>Fecha Fin:</label> <input type="date" id="fecha-fin"></div>
+        <button class="btn-generate" onclick="filtrarPorFecha()">Filtrar por Fecha</button>
     </div>
     
     <div class="summary">
@@ -35,25 +34,194 @@
 
     <table>
         <thead>
-            <tr>
-                <th>Fecha</th>
-                <th>Total Venta</th>
-                <th>Efectivo</th>
-                <th>Tarjeta</th>
-                <th>Adeudos</th>
-            </tr>
+    <tr>
+        <th># Venta</th>
+        <th>Fecha</th>
+        <th>Cliente</th>
+        <th>Método de Pago</th>
+        <th>Total</th>
+        <th>Adeudo</th>
+    </tr>
         </thead>
-        <tbody>
-            <tr><td>12/12/2025</td><td>$88.00</td><td>$88.00</td><td>$0.00</td><td>$0.00</td></tr>
-            <tr><td>11/12/2025</td><td>$2,100.00</td><td>$1,800.00</td><td>$300.00</td><td>$0.00</td></tr>
-            <tr><td>10/12/2025</td><td>$3,500.00</td><td>$2,950.00</td><td>$0.00</td><td>$550.00</td></tr>
+        <tbody id="tabla-ventas">
+            <tr>
+                <td colspan="6" style="text-align:center; color:#999;">Cargando ventas...</td>
+            </tr>
         </tbody>
     </table>
     
     <div class="actions export-actions">
-        <button class="btn-generate" onclick="alert('Exportando a PDF...')">Exportar a PDF</button>
-        <button class="btn-generate" onclick="alert('Exportando a Excel...')">Exportar a Excel</button>
+        <button class="btn-generate" onclick="exportarTXT()">Exportar a TXT</button>
     </div>
 </div>
+<script>
+let todasLasVentas = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    cargarVentas();
+});
+
+function cargarVentas() {
+    fetch('http://localhost:8080/api/obtenerVentas')
+        .then(res => res.json())
+        .then(data => {
+            todasLasVentas = data;
+            renderizarTabla(data);
+        })
+        .catch(err => {
+            console.error('Error al cargar ventas:', err);
+            document.getElementById('tabla-ventas').innerHTML =
+                '<tr><td colspan="6" style="text-align:center; color:red;">Error al cargar las ventas.</td></tr>';
+        });
+}
+
+function renderizarTabla(ventas) {
+    const tbody = document.getElementById('tabla-ventas');
+    tbody.innerHTML = '';
+
+    if (ventas.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999;">No hay ventas en este período.</td></tr>';
+        actualizarResumen([]);
+        return;
+    }
+
+    ventas.forEach(venta => {
+        const tr = document.createElement('tr');
+
+        // Badge de color según método de pago
+        const colores = {
+            'Efectivo': '#27ae60',
+            'Tarjeta':  '#009ee3',
+            'Credito':  '#e67e22'
+        };
+        const color = colores[venta.Metodo_pago] || '#95a5a6';
+
+        tr.innerHTML = `
+            <td>#${venta.Id_ventas}</td>
+            <td>${formatearFecha(venta.Fecha_venta)}</td>
+            <td>${venta.Nombre_cliente}</td>
+            <td>
+                <span style="background:${color}; color:white; padding: 3px 10px;
+                             border-radius: 12px; font-size: 13px;">
+                    ${venta.Metodo_pago}
+                </span>
+            </td>
+            <td>$${venta.Total.toFixed(2)}</td>
+            <td style="color: ${venta.Adeudo > 0 ? '#e74c3c' : '#27ae60'};">
+                $${venta.Adeudo.toFixed(2)}
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    actualizarResumen(ventas);
+}
+
+function actualizarResumen(ventas) {
+    const totalNeto = ventas.reduce((sum, v) => sum + v.Total, 0);
+    document.querySelector('.summary').innerHTML =
+        `Total de Ventas Netas en el Período: <span style="color:#2c3e50;">$${totalNeto.toFixed(2)}</span><br>
+         Número de transacciones: <span style="color:#2c3e50;">${ventas.length}</span>`;
+}
+
+function formatearFecha(fechaStr) {
+    const [anio, mes, dia] = fechaStr.split('-');
+    return `${dia}/${mes}/${anio}`;
+}
+
+function filtrarPorFecha() {
+    const fechaInicio = document.getElementById('fecha-inicio').value;
+    const fechaFin    = document.getElementById('fecha-fin').value;
+
+    // Validaciones
+    if (!fechaInicio || !fechaFin) {
+        alert('⚠️ Selecciona ambas fechas para generar el reporte.');
+        return;
+    }
+    if (fechaInicio > fechaFin) {
+        alert('⚠️ La fecha de inicio no puede ser mayor a la fecha fin.');
+        return;
+    }
+
+    // Filtrar del arreglo que ya tenemos en memoria
+    const ventasFiltradas = todasLasVentas.filter(venta => {
+        return venta.Fecha_venta >= fechaInicio && venta.Fecha_venta <= fechaFin;
+    });
+
+    renderizarTabla(ventasFiltradas);
+
+    if (ventasFiltradas.length === 0) {
+        alert(`ℹ️ No hay ventas entre ${formatearFecha(fechaInicio)} y ${formatearFecha(fechaFin)}.`);
+    }
+}
+
+function exportarTXT() {
+    const fechaInicio = document.getElementById('fecha-inicio').value;
+    const fechaFin    = document.getElementById('fecha-fin').value;
+
+    // Tomar las ventas actualmente visibles en la tabla
+    const ventasActuales = (fechaInicio && fechaFin)
+        ? todasLasVentas.filter(v => v.Fecha_venta >= fechaInicio && v.Fecha_venta <= fechaFin)
+        : todasLasVentas;
+
+    if (ventasActuales.length === 0) {
+        alert('⚠️ No hay ventas para exportar.');
+        return;
+    }
+
+    const totalNeto = ventasActuales.reduce((sum, v) => sum + v.Total, 0);
+    const separador = '='.repeat(65);
+    const linea     = '-'.repeat(65);
+
+    let txt = '';
+    txt += separador + '\n';
+    txt += '         REPORTE DE VENTAS - MINISUPER JJ\n';
+    txt += separador + '\n';
+
+    if (fechaInicio && fechaFin) {
+        txt += `Período: ${formatearFecha(fechaInicio)} al ${formatearFecha(fechaFin)}\n`;
+    } else {
+        txt += 'Período: Todas las ventas\n';
+    }
+
+    txt += `Generado: ${new Date().toLocaleString('es-MX')}\n`;
+    txt += separador + '\n\n';
+
+    // Encabezado de tabla
+    txt += '#Venta  Fecha        Cliente                Método      Total       Adeudo\n';
+    txt += linea + '\n';
+
+    // Filas
+    ventasActuales.forEach(venta => {
+        const id       = String(venta.Id_ventas).padEnd(7);
+        const fecha    = formatearFecha(venta.Fecha_venta).padEnd(13);
+        const cliente  = venta.Nombre_cliente.substring(0, 20).padEnd(22);
+        const metodo   = venta.Metodo_pago.padEnd(11);
+        const total    = `$${venta.Total.toFixed(2)}`.padEnd(11);
+        const adeudo   = `$${venta.Adeudo.toFixed(2)}`;
+        txt += `${id} ${fecha} ${cliente} ${metodo} ${total} ${adeudo}\n`;
+    });
+
+    txt += linea + '\n';
+    txt += `\nTotal de transacciones : ${ventasActuales.length}\n`;
+    txt += `Total neto del período : $${totalNeto.toFixed(2)}\n`;
+    txt += '\n' + separador + '\n';
+    txt += '                  MiniSuper JJ\n';
+    txt += separador + '\n';
+
+    // Crear y descargar el archivo
+    const blob     = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+    const url      = URL.createObjectURL(blob);
+    const a        = document.createElement('a');
+    const nombreArchivo = fechaInicio && fechaFin
+        ? `ventas_${fechaInicio}_${fechaFin}.txt`
+        : `ventas_completo_${new Date().toISOString().split('T')[0]}.txt`;
+
+    a.href     = url;
+    a.download = nombreArchivo;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+</script>
 </body>
 </html>

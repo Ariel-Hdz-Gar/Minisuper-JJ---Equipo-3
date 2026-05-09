@@ -471,6 +471,45 @@ public static String obtenerVentas()
     return json.toString();
 }
 
+public static String obtenerVentasHoy()
+{
+    String sql = "SELECT v.Id_ventas, COALESCE(c.Nombre_cliente, 'Publico General') as Nombre_cliente, " +
+                 "v.Metodo_pago, v.Total " +
+                 "FROM ventas v " +
+                 "LEFT JOIN clientes c ON v.ID_Clientes = c.Id_clientes " +
+                 "WHERE v.Fecha_venta = CURDATE() " +
+                 "ORDER BY v.Id_ventas DESC";
+    StringBuilder json = new StringBuilder("[");
+    try (Connection con = conectarDB();
+         PreparedStatement ps = con.prepareStatement(sql))
+    {
+        ResultSet rs = ps.executeQuery();
+        boolean first = true;
+        while (rs.next()) {
+            System.out.println("Procesando venta ID: " + rs.getInt("Id_ventas")); // ← agrega
+            if (!first) json.append(",");
+            json.append("{\"Id_ventas\":");
+            json.append(rs.getInt("Id_ventas"));
+            json.append(",\"Nombre_cliente\":\"");
+            json.append(rs.getString("Nombre_cliente"));
+            json.append("\",\"Metodo_pago\":\"");
+            json.append(rs.getString("Metodo_pago"));
+            json.append("\",\"Total\":");
+            json.append(rs.getDouble("Total"));
+            json.append("}");
+            first = false;
+        }
+        System.out.println("JSON construido: " + json.toString()); // ← agrega
+    }
+    catch (SQLException e)
+    {
+        System.out.println("Error: " + e.getMessage());
+        e.printStackTrace();
+    }
+    json.append("]");
+    return json.toString();
+}
+
     public static String validarLogin(String Nombre_Completo, String Contraseña)
     {
         String sql = "SELECT r.Id_roles FROM usuarios u " +
@@ -528,6 +567,7 @@ public static String obtenerVentas()
             server.createContext("/api/registrarCliente", new RegistrarClienteHandler());
             server.createContext("/api/obtenerAdeudos", new ObtenerAdeudosHandler());
             server.createContext("/api/obtenerVentas", new ObtenerVentasHandler());
+            server.createContext("/api/obtenerVentasHoy", new ObtenerVentasHoyHandler());
             server.setExecutor(null);
             server.start();
             System.out.println("Servidor iniciado en http://localhost:8080");
@@ -1013,6 +1053,33 @@ static class ObtenerVentasHandler implements HttpHandler {
             exchange.sendResponseHeaders(200, ventasJson.length());
             OutputStream os = exchange.getResponseBody();
             os.write(ventasJson.getBytes());
+            os.close();
+        } else if ("OPTIONS".equals(exchange.getRequestMethod())) {
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, OPTIONS");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+            exchange.sendResponseHeaders(204, -1);
+            exchange.close();
+        }
+    }
+}
+
+static class ObtenerVentasHoyHandler implements HttpHandler {
+    @Override
+    public void handle(HttpExchange exchange) throws IOException {
+        if ("GET".equals(exchange.getRequestMethod())) {
+            System.out.println("Solicitando ventas de hoy");
+            String ventasJson = obtenerVentasHoy();
+            System.out.println("JSON a enviar: " + ventasJson);
+
+            // ← CAMBIO: usar getBytes("UTF-8") en vez de length()
+            byte[] responseBytes = ventasJson.getBytes("UTF-8");
+
+            exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.sendResponseHeaders(200, responseBytes.length);
+            OutputStream os = exchange.getResponseBody();
+            os.write(responseBytes);
             os.close();
         } else if ("OPTIONS".equals(exchange.getRequestMethod())) {
             exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");

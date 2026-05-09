@@ -107,7 +107,6 @@ public class ISWConexion
         return json.toString();
     }
 
-    // Método para obtener productos con stock bajo
     public static String obtenerProductosBajoStock()
     {
         String sql = "SELECT Nombre_Producto, Stock, Stock_Minimo FROM productos WHERE Stock <= Stock_Minimo ORDER BY Nombre_Producto";
@@ -334,6 +333,46 @@ public class ISWConexion
         try { if (con != null) con.close(); } catch (SQLException e) { e.printStackTrace(); }
     }
 }
+
+public static String obtenerAdeudos()
+{
+    String sql = "SELECT a.Id_Adeudo, c.Nombre_cliente, a.Monto_Ad, " +
+                 "a.Fecha_Limite, a.Dias_Atraso " +
+                 "FROM adeudos a " +
+                 "JOIN clientes c ON a.Id_Cli = c.Id_clientes " +
+                 "ORDER BY a.Dias_Atraso DESC, a.Fecha_Limite ASC";
+    StringBuilder json = new StringBuilder("[");
+    try (Connection con = conectarDB();
+         PreparedStatement ps = con.prepareStatement(sql))
+    {
+        ResultSet rs = ps.executeQuery();
+        boolean first = true;
+        while (rs.next()) {
+            if (!first) json.append(",");
+            json.append("{\"Id_Adeudo\":");
+            json.append(rs.getInt("Id_Adeudo"));
+            json.append(",\"Nombre_cliente\":\"");
+            json.append(rs.getString("Nombre_cliente"));
+            json.append("\",\"Monto_Ad\":");
+            json.append(rs.getDouble("Monto_Ad"));
+            json.append(",\"Fecha_Limite\":\"");
+            json.append(rs.getString("Fecha_Limite"));
+            json.append("\",\"Dias_Atraso\":");
+            json.append(rs.getInt("Dias_Atraso"));
+            json.append("}");
+            first = false;
+        }
+    }
+    catch (SQLException e)
+    {
+        System.out.println("Error al obtener adeudos: " + e.getMessage());
+        e.printStackTrace();
+    }
+    json.append("]");
+    return json.toString();
+}
+
+
 public static String obtenerClientes()
 {
     String sql = "SELECT Id_clientes, Nombre_cliente, Telefono_cliente FROM clientes ORDER BY Nombre_cliente";
@@ -363,6 +402,7 @@ public static String obtenerClientes()
     json.append("]");
     return json.toString();
 }
+
 public static String registrarCliente(String Nombre_cliente, String Telefono_cliente)
 {
     String sql = "INSERT INTO clientes (Nombre_cliente, Telefono_cliente) VALUES (?, ?)";
@@ -388,6 +428,49 @@ public static String registrarCliente(String Nombre_cliente, String Telefono_cli
         return "error";
     }
 }
+
+public static String obtenerVentas()
+{
+    String sql = "SELECT v.Id_ventas, v.Fecha_venta, c.Nombre_cliente, " +
+                 "v.Metodo_pago, v.Total, " +
+                 "COALESCE(a.Monto_Ad, 0) as Adeudo " +
+                 "FROM ventas v " +
+                 "JOIN clientes c ON v.ID_Clientes = c.Id_clientes " +
+                 "LEFT JOIN adeudos a ON v.Id_ventas = a.Id_Ven " +
+                 "ORDER BY v.Fecha_venta DESC, v.Id_ventas DESC";
+    StringBuilder json = new StringBuilder("[");
+    try (Connection con = conectarDB();
+         PreparedStatement ps = con.prepareStatement(sql))
+    {
+        ResultSet rs = ps.executeQuery();
+        boolean first = true;
+        while (rs.next()) {
+            if (!first) json.append(",");
+            json.append("{\"Id_ventas\":");
+            json.append(rs.getInt("Id_ventas"));
+            json.append(",\"Fecha_venta\":\"");
+            json.append(rs.getString("Fecha_venta"));
+            json.append("\",\"Nombre_cliente\":\"");
+            json.append(rs.getString("Nombre_cliente"));
+            json.append("\",\"Metodo_pago\":\"");
+            json.append(rs.getString("Metodo_pago"));
+            json.append("\",\"Total\":");
+            json.append(rs.getDouble("Total"));
+            json.append(",\"Adeudo\":");
+            json.append(rs.getDouble("Adeudo"));
+            json.append("}");
+            first = false;
+        }
+    }
+    catch (SQLException e)
+    {
+        System.out.println("Error al obtener ventas: " + e.getMessage());
+        e.printStackTrace();
+    }
+    json.append("]");
+    return json.toString();
+}
+
     public static String validarLogin(String Nombre_Completo, String Contraseña)
     {
         String sql = "SELECT r.Id_roles FROM usuarios u " +
@@ -443,6 +526,8 @@ public static String registrarCliente(String Nombre_cliente, String Telefono_cli
             server.createContext("/api/registrarVenta", new RegistrarVentaHandler());
             server.createContext("/api/obtenerClientes",  new ObtenerClientesHandler());
             server.createContext("/api/registrarCliente", new RegistrarClienteHandler());
+            server.createContext("/api/obtenerAdeudos", new ObtenerAdeudosHandler());
+            server.createContext("/api/obtenerVentas", new ObtenerVentasHandler());
             server.setExecutor(null);
             server.start();
             System.out.println("Servidor iniciado en http://localhost:8080");
@@ -894,4 +979,49 @@ static class RegistrarClienteHandler implements HttpHandler {
         }
         return params;
     }
+
+    static class ObtenerAdeudosHandler implements HttpHandler {
+    @Override
+    public void handle(HttpExchange exchange) throws IOException {
+        if ("GET".equals(exchange.getRequestMethod())) {
+            System.out.println("Solicitando lista de adeudos");
+            String adeudosJson = obtenerAdeudos();
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.sendResponseHeaders(200, adeudosJson.length());
+            OutputStream os = exchange.getResponseBody();
+            os.write(adeudosJson.getBytes());
+            os.close();
+        } else if ("OPTIONS".equals(exchange.getRequestMethod())) {
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, OPTIONS");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+            exchange.sendResponseHeaders(204, -1);
+            exchange.close();
+        }
+    }
+}
+
+static class ObtenerVentasHandler implements HttpHandler {
+    @Override
+    public void handle(HttpExchange exchange) throws IOException {
+        if ("GET".equals(exchange.getRequestMethod())) {
+            System.out.println("Solicitando reporte de ventas");
+            String ventasJson = obtenerVentas();
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.sendResponseHeaders(200, ventasJson.length());
+            OutputStream os = exchange.getResponseBody();
+            os.write(ventasJson.getBytes());
+            os.close();
+        } else if ("OPTIONS".equals(exchange.getRequestMethod())) {
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, OPTIONS");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+            exchange.sendResponseHeaders(204, -1);
+            exchange.close();
+        }
+    }
+}
+
 }

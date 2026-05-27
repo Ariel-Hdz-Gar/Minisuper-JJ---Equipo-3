@@ -19,10 +19,10 @@
 </head>
 <body>
 <div class="container">
-    <h2>🔔 Alertas de Inventario Bajo </h2>
+    <h2>Alertas de Inventario Bajo </h2>
     
     <div class="alert-box">
-        Productos por debajo del Stock Mínimo (3 artículos). Se recomienda reabastecimiento.
+        Productos por debajo del Stock Mínimo. Se recomienda reabastecimiento.
     </div>
     
     <table>
@@ -59,8 +59,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td>${producto.Nombre_Producto}</td>
                     <td>${producto.Stock}</td>
                     <td>${producto.Stock_Minimo}</td>
-                    <td><button class="btn-action">Añadir a Pedido</button> <button class="btn-ignore">Ignorar</button></td>
+                    <td>
+                        <button class="btn-action btn-add">Añadir a Pedido</button>
+                        <button class="btn-ignore">Ignorar</button>
+                    </td>
                 `;
+
+                // Añadir manejador para el botón Ignorar que elimina la fila de la tabla
+                const btnIgnore = row.querySelector('.btn-ignore');
+                if (btnIgnore) {
+                    btnIgnore.addEventListener('click', () => {
+                        if (confirm('¿Ignorar esta alerta y eliminar de la tabla?')) {
+                            row.remove();
+                            // Si se desea persistir la acción en el servidor, descomentar y ajustar:
+                            // fetch(`http://localhost:8080/api/ignorarProducto/${producto.id}`, { method: 'POST' })
+                            //   .catch(err => console.error('No se pudo notificar al servidor:', err));
+                        }
+                    });
+                }
+
                 tbody.appendChild(row);
             });
         })

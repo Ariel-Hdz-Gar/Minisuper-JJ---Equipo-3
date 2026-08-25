@@ -1,34 +1,43 @@
->Extensiones de VSCode se pueden instalar con este comando:
+# Versiones y Configuración del Entorno
+
+SO: Windows 11[cite: 1]
+
+---
+
+## 1. Extensiones de VS Code
+
+Para instalar todo de un jalón en la terminal:
+
+```bash
 code --install-extension ecmel.vscode-html-css --install-extension ms-azuretools.vscode-containers --install-extension ms-azuretools.vscode-docker --install-extension ms-dotnettools.csdevkit --install-extension ms-dotnettools.csharp --install-extension ms-dotnettools.vscode-dotnet-runtime --install-extension ms-vscode.live-server --install-extension redhat.java --install-extension vscjava.vscode-gradle --install-extension vscjava.vscode-java-debug --install-extension vscjava.vscode-java-dependency --install-extension vscjava.vscode-java-pack --install-extension vscjava.vscode-java-test --install-extension vscjava.vscode-maven
---------------------------------------------------------------------------------------------------------
->ecmel.vscode-html-css@2.0.14
->ms-azuretools.vscode-containers@2.5.0
->ms-azuretools.vscode-docker@2.0.0
->ms-dotnettools.csdevkit@3.20.199
->ms-dotnettools.csharp@2.140.9
->ms-dotnettools.vscode-dotnet-runtime@3.1.0
->ms-vscode.live-server@0.4.20
->redhat.java@1.55.0
->vscjava.vscode-gradle@3.18.0
->vscjava.vscode-java-debug@0.59.0
->vscjava.vscode-java-dependency@0.27.6
->vscjava.vscode-java-pack@0.31.1
->vscjava.vscode-java-test@0.46.0
->vscjava.vscode-maven@0.45.3
-------------------------------------------------------------------------------------------------------
->MariaDB 11.8.3:
-1.-Para instalar MariaDB en Windows 11 mediante el instalador oficial MSI:
+```
+[cite: 1]
 
-2.-Descarga el paquete de instalación oficial .msi correspondiente a la versión 11.8.3 desde el sitio web de MariaDB.
+### Lista de versiones usadas:
+* `ecmel.vscode-html-css@2.0.14`[cite: 1]
+* `ms-azuretools.vscode-containers@2.5.0`[cite: 1]
+* `ms-azuretools.vscode-docker@2.0.0`[cite: 1]
+* `ms-dotnettools.csdevkit@3.20.199`[cite: 1]
+* `ms-dotnettools.csharp@2.140.9`[cite: 1]
+* `ms-dotnettools.vscode-dotnet-runtime@3.1.0`[cite: 1]
+* `ms-vscode.live-server@0.4.20`[cite: 1]
+* `redhat.java@1.55.0`[cite: 1]
+* `vscjava.vscode-gradle@3.18.0`[cite: 1]
+* `vscjava.vscode-java-debug@0.59.0`[cite: 1]
+* `vscjava.vscode-java-dependency@0.27.6`[cite: 1]
+* `vscjava.vscode-java-pack@0.31.1`[cite: 1]
+* `vscjava.vscode-java-test@0.46.0`[cite: 1]
+* `vscjava.vscode-maven@0.45.3`[cite: 1]
 
-3.-Ejecuta el instalador y sigue el asistente (Next).
+---
 
-4.-Acepta los términos de la licencia y selecciona la ruta de instalación.
+## 2. MariaDB 11.8.3
 
-5.-Define la contraseña del usuario root y activa la opción para permitir conexiones remotas si tu entorno lo requiere.
+Instalación en Windows 11 con el instalador oficial MSI:[cite: 1]
 
-6.-Asegúrate de marcar la casilla Install as Service para que el servicio de base de datos se ejecute en segundo plano con el nombre por defecto (MariaDB).
-
-7.-Haz clic en Install y finaliza la instalación.
---------------------------------------------------------------------------------------------------------
->Windows 11
+1. Descargar el `.msi` de la versión **11.8.3** desde la página oficial de MariaDB.[cite: 1]
+2. Abrir el instalador y darle a *Next*.[cite: 1]
+3. Aceptar la licencia y dejar o cambiar la ruta de instalación.[cite: 1]
+4. Poner contraseña al usuario `root` (activar conexiones remotas si hace falta).[cite: 1]
+5. Marcar la casilla **Install as Service** para que corra de fondo con el nombre por defecto (`MariaDB`).[cite: 1]
+6. Darle a **Install** y finalizar.[cite: 1]

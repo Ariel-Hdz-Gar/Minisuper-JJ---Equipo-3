@@ -6,6 +6,7 @@ Integrantes:
 -Ariel Hernández García 
 -Sebastian Pérez López
 -Néstor González Olivo
+-Luis Jahir Palomares Retana
 
 Descripcion del proyecto: 
 **# Sistema de Gestión de Inventario y Control de Ventas — MiniSuper JJ**

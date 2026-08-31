@@ -26,7 +26,7 @@ El módulo de Reporte (Reporte.html) es la herramienta de análisis financiero y
 6. Seguridad
 El módulo de Seguridad (Seguridad.html) es la herramienta de control administrativo responsable de la gestión de personal y la asignación de roles dentro del sistema. Su flujo inicia con un formulario de captura que permite registrar nuevos perfiles laborales utilizando el RFC como identificador único, lo que garantiza la integridad de los datos de cada trabajador. La funcionalidad principal réside en la definición y asignación de cargos, mecanismo fundamental para restringir y administrar los permisos de acceso a las distintas áreas del sistema del minisuper. El proceso concluye en una tabla de visualización de registros que permite al administrador verificar, auditar y consultar rápidamente la información de la plantilla laboral.
 
-## Realizar cambios en el prototipo
+##Para realizar cambios en el prototipo
 
 Para realizar cambios en el prototipo del software solo se tienen que editar los archvios siguientes: 
 -ISWConexion.java que se encuentra en la carpeta del Back-End (Java)

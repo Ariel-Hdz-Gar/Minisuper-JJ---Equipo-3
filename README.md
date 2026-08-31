@@ -8,51 +8,14 @@ Integrantes:
 -Néstor González Olivo
 -Luis Jahir Palomares Retana
 
-Descripcion del proyecto: 
-**# Sistema de Gestión de Inventario y Control de Ventas — MiniSuper JJ**
-Sistema integral desarrollado para digitalizar, automatizar y optimizar los procesos operativos y administrativos del **MiniSuper JJ**, reduciendo errores manuales y facilitando la toma de decisiones estratégicas.
----
-**## 🚀 Características Principales**
-* **Gestión de Ventas y Caja:**
-* Procesamiento de ventas con soporte para múltiples métodos de pago: Efectivo, Mercado Pago y Crédito (fiado).
-* Control e historial de movimientos de flujo de caja diario.
-* **Control de Inventario y Compras:**
-* Registro de entrada de mercancía y gestión de proveedores.
-* Actualización en tiempo real del stock de productos.
-* Alertas automáticas para productos con bajo stock o de mayor rotación.
-* **Administración de Clientes y Créditos:**
-* Seguimiento y control de adeudos/cuentas por cobrar de clientes.
-* **Reportes y Analítica:**
-* Generación de reportes periódicos de ventas y rendimiento.
-* Visualización del estado general del negocio para la toma de decisiones sobre compras y reposición.
----
-**## 🛠️ Tecnologías Utilizadas**
-* **Lenguaje de Programación:** Java
-* **Interfaz Gráfica:** JavaFX / Java Swing
-* **Base de Datos:** Relacional (SQL / PL-SQL)
----
-**## 📋 Requisitos del Sistema**
-* **Java Development Kit (JDK):** Versión 17 o superior.
-* **Motor de Base de Datos:** Servidor de base de datos SQL activo.
----
-**## 🔧 Instalación y Configuración**
-1. **Clonar el repositorio:**
-```bash
-git clone https://github.com/tu-usuario/minisuper-jj-sistema.git
-cd minisuper-jj-sistema
-```
-2. **Configurar la Base de Datos:**
-* Importa el script del esquema `database/schema.sql` en tu gestor de base de datos.
-* Ajusta las credenciales de conexión en el archivo de configuración correspondiente (`config.properties` o similar).
-3. **Compilar y Ejecutar:**
-```bash
-./gradlew run   # O usa el ejecutable de tu IDE (IntelliJ, Eclipse, NetBeans)
-```
----
-**##Objetivos del Proyecto**
-* **Eficiencia Operativa:** Agilizar el registro diario de compras y ventas.
-* **Precisión de Datos:** Eliminar descuadres manuales e inconsistencias de inventario.
-* **Control Financiero:** Claridad en el flujo de efectivo y cuentas pendientes.
+El proyecto consiste en el desarrollo de un sistema de gestión de inventario y control de ventas para el MiniSuper JJ, cuyo propósito es digitalizar y automatizar los procesos administrativos que actualmente se realizan de forma manual dentro del negocio.
+
+El software permitirá registrar y administrar información relacionada con los productos, proveedores, ventas, compras, inventario y movimientos de caja, facilitando el control de las operaciones diarias del mini súper. A través del sistema, el personal podrá registrar la entrada de mercancía, realizar ventas mediante diferentes métodos de pago (efectivo, Mercado Pago o crédito), actualizar automáticamente el inventario y consultar información relevante sobre el estado de los productos.
+
+Además, el sistema incorporará funcionalidades para generar reportes de ventas, controlar el flujo de efectivo, administrar adeudos de clientes y visualizar el estado del inventario, permitiendo identificar productos con bajo stock o con mayor rotación. De esta manera, el dueño del negocio podrá tomar decisiones más informadas respecto a compras, reposición de productos y administración del negocio.
+
+El desarrollo del sistema busca mejorar la eficiencia operativa, reducir errores humanos, optimizar el control de la información y proporcionar datos claros y organizados, contribuyendo al crecimiento y mejor manejo administrativo del MiniSuper JJ. 
+
 # Versiones y Configuración del Entorno
 SO: Windows 11[cite: 1]
 ---

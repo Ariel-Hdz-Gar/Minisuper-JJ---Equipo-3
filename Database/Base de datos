@@ -1,4 +1,5 @@
-Este diagrama de entidad-relación representa un sistema de gestión para un negocio de ventas, control de inventario, clientes, deudas y usuarios del sistema.
+Este diagrama de entidad-relación representa un sistema de gestión para un negocio de ventas, control de inventario,
+clientes, deudas y usuarios del sistema.
 
 1. Entidades y sus Atributos (Tablas)
 •	Roles: Define los permisos o perfiles del sistema.

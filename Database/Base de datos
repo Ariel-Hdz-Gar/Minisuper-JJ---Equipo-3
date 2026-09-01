@@ -1,0 +1,56 @@
+Este diagrama de entidad-relación representa un sistema de gestión para un negocio de ventas, control de inventario, clientes, deudas y usuarios del sistema.
+
+1. Entidades y sus Atributos (Tablas)
+•	Roles: Define los permisos o perfiles del sistema.
+  *	Id_roles (Llave Primaria)
+  *	Nombre__Rol
+
+•	Usuarios: Personal que accede al sistema.
+  *	Id_Usuarios (Llave Primaria)
+  *	ID_Roles (Llave Foránea que conecta con Roles)
+  *	Nombre_Completo, Contraseña
+
+•	Proveedores: Empresas o personas que surten los artículos.
+  *	Id_proveedores (Llave Primaria)
+  *	Nombre_proveedor
+
+•	Productos: Inventario de la tienda.
+  * Id_Productos (Llave Primaria)
+  *	ID_Proveedores (Llave Foránea que conecta con Proveedores)
+  *	Nombre_Producto, Precio_Compra, Precio_Venta, Stock (existencia), Stock_Minimo (alerta de reabastecimiento)
+	
+•	Clientes: Personas que realizan compras.
+  *	Id_clientes (Llave Primaria)
+  *	Nombre_cliente, Telefono_cliente
+
+•	Ventas: Cabecera de la transacción de venta.
+  *	Id_ventas (Llave Primaria)
+  *	ID_Clientes (Llave Foránea que conecta con Clientes)
+  *	Fecha_venta, Hora_venta, Metodo_pago, Subtotal, Total, Monto_Recibido, Cambio
+
+•	Detalle_Ventas: Tabla intermedia para desglosar los productos incluidos en cada venta.
+  *	Id_detalles (Llave Primaria)
+  *	ID_Ventas (Llave Foránea), ID_Productos (Llave Foránea)
+  *	Cantidad, Precio_unitario
+
+•	Adeudos: Registro de deudas pendientes de los clientes.
+  *	Id_Adeudo (Llave Primaria)
+  *	Id_Ven (Llave Foránea a Ventas), Id_Cli (Llave Foránea a Clientes)
+  *	Monto_Ad, Fecha_Limite, Dias_Atraso
+
+•	Pago_Clientes: Historial de abonos o pagos realizados por los clientes para saldar adeudos.
+  *	Id_pago (Llave Primaria)
+  *	ID_ClientesP (Llave Foránea a Clientes)
+  *	Monto_Pagado, Fecha_pago, Hora_pago
+
+2. Relaciones y Cardinalidad
+•	Roles — Usuarios (1 : M): Un rol puede asignarse a muchos usuarios, pero un usuario pertenece a un solo rol.
+•	Proveedores — Productos (1 : M): Un proveedor puede suministrar varios productos, pero cada producto pertenece a 
+  un proveedor principal.
+•	Productos — Detalle_Ventas — Ventas (N : M): Existe una relación de Muchos a Muchos entre Productos y Ventas,
+  resuelta mediante la tabla puente Detalle_Ventas. Una venta puede contener múltiples productos y un producto puede
+  figurar en múltiples ventas.
+•	Clientes — Ventas (1 : M): Un cliente puede realizar muchas ventas (compras), pero cada registro de venta pertenece a 
+  un solo cliente.
+•	Clientes — Pago_Clientes (1 : M): Un cliente puede realizar múltiples pagos de abonos a lo largo del tiempo.
+•	Clientes / Ventas — Adeudos (1 : M): Un cliente puede generar múltiples deudas asociadas a distintas ventas.
